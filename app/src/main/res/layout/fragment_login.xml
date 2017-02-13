@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="us.stump.imgurapitest.LoginButtonFragment">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/welcome_text_space"
+        android:text="@string/imgur_welcome_text"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:textSize="@dimen/welcome_text_size"/>
+
+
+    <Button
+        android:id="@+id/imgur_login_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/button_margin"
+        android:padding="@dimen/button_padding"
+        android:text="@string/imgur_login_button_text"/>
+
+</LinearLayout>

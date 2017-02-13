@@ -7,3 +7,5 @@
 /build
 /captures
 .externalNativeBuild
+
+app/src/main/java/us/stump/imgurapitest/Constants\.java
