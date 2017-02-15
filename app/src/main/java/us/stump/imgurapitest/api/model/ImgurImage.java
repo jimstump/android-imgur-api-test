@@ -1,5 +1,8 @@
 package us.stump.imgurapitest.api.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.Date;
 
 /**
@@ -7,7 +10,7 @@ import java.util.Date;
  * See: https://api.imgur.com/models/image
  */
 
-public class ImgurImage {
+public class ImgurImage implements Parcelable {
 
     /**
      * The ID for the image
@@ -141,12 +144,12 @@ public class ImgurImage {
     /**
      * Bandwidth consumed by the image in bytes
      */
-    private Integer bandwidth;
+    private Double bandwidth;
 
     /**
      * Bandwidth consumed by the image in bytes
      */
-    public Integer getBandwidth() {
+    public Double getBandwidth() {
         return bandwidth;
     }
 
@@ -165,7 +168,7 @@ public class ImgurImage {
     /**
      * OPTIONAL, the original filename, if you're logged in as the image owner
      */
-    private  String name;
+    private String name;
 
     /**
      * OPTIONAL, the original filename, if you're logged in as the image owner
@@ -292,5 +295,94 @@ public class ImgurImage {
      */
     public Boolean getIn_gallery() {
         return in_gallery;
+    }
+
+
+    /* Parcelable functions */
+
+    /**
+     * Describe the kinds of special objects contained in this Parcelable instance's marshaled representation.
+     *
+     * We don't have any special objects, so always 0;
+     *
+     * @return Bitmask on special object constants
+     */
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Flatten this object in to a Parcel.
+     * @param out Parcel to write out to
+     * @param flags Additional flags about how the object should be written
+     */
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeString(id);
+        out.writeString(title);
+        out.writeString(description);
+        out.writeInt(datetime);
+        out.writeString(type);
+        out.writeInt(animated ? 1 : 0);
+        out.writeInt(width);
+        out.writeInt(height);
+        out.writeInt(size);
+        out.writeInt(views);
+        out.writeDouble(bandwidth);
+        out.writeString(deletehash);
+        out.writeString(name);
+        out.writeString(section);
+        out.writeString(link);
+        out.writeString(gifv);
+        out.writeString(mp4);
+        out.writeInt(mp4_size);
+        out.writeInt(looping ? 1 : 0);
+        out.writeInt(favorite ? 1 : 0);
+        out.writeInt(nsfw ? 1 : 0);
+        out.writeString(vote);
+        out.writeInt(in_gallery ? 1 : 0);
+    }
+
+    /**
+     *
+     */
+    public static final Parcelable.Creator<ImgurImage> CREATOR
+            = new Parcelable.Creator<ImgurImage>() {
+        public ImgurImage createFromParcel(Parcel in) {
+            return new ImgurImage(in);
+        }
+
+        public ImgurImage[] newArray(int size) {
+            return new ImgurImage[size];
+        }
+    };
+
+    /**
+     * Private constructor for use with a Parcel
+     * @param in The stored Parcel
+     */
+    private ImgurImage(Parcel in) {
+        id = in.readString();
+        title = in.readString();
+        description = in.readString();
+        datetime = in.readInt();
+        type = in.readString();
+        animated = (in.readInt() == 1);
+        width = in.readInt();
+        height = in.readInt();
+        size = in.readInt();
+        views = in.readInt();
+        bandwidth = in.readDouble();
+        deletehash = in.readString();
+        name = in.readString();
+        section = in.readString();
+        link = in.readString();
+        gifv = in.readString();
+        mp4 = in.readString();
+        mp4_size = in.readInt();
+        looping = (in.readInt() == 1);
+        favorite = (in.readInt() == 1);
+        nsfw = (in.readInt() == 1);
+        vote = in.readString();
+        in_gallery = (in.readInt() == 1);
     }
 }

@@ -27,16 +27,6 @@ public class ImgurServiceGenerator {
         return createService(serviceClass, null);
     }
 
-    // Probably don't need this
-    public static <S> S createService(Class<S> serviceClass, String username, String password) {
-        if (!TextUtils.isEmpty(username) && !TextUtils.isEmpty(password)) {
-            String authToken = Credentials.basic(username, password);
-            return createService(serviceClass, authToken);
-        }
-
-        return createService(serviceClass, null);
-    }
-
     public static <S> S createService(Class<S> serviceClass, final String authToken) {
         if (!TextUtils.isEmpty(authToken)) {
             AuthenticationInterceptor interceptor = new AuthenticationInterceptor(authToken);

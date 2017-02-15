@@ -12,11 +12,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import us.stump.imgurapitest.api.model.ImgurAccessToken;
-import us.stump.imgurapitest.dummy.DummyContent;
+import us.stump.imgurapitest.api.model.ImgurImage;
 
 public class MainActivity extends AppCompatActivity implements
         LoginButtonFragment.OnLoginButtonClickedListener,
-        ImgurImageFragment.OnListFragmentInteractionListener,
+        ImgurImageListFragment.OnListFragmentInteractionListener,
         ImgurLoginFragment.OnImgurTokenReceivedListener
 {
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements
         storeAuthToken(auth_token);
 
 
-        ImgurImageFragment newFragment = ImgurImageFragment.newInstance(auth_token);
+        ImgurImageListFragment newFragment = ImgurImageListFragment.newInstance(auth_token);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
@@ -163,8 +163,22 @@ public class MainActivity extends AppCompatActivity implements
         transaction.commit();
     }
 
-    public void onListFragmentInteraction(DummyContent.DummyItem item)
+    public void onListFragmentInteraction(ImgurImage item)
     {
-        Log.v("imgur", "Dummy Item Clicked!!");
+        Log.v("imgur", "Image Tapped!!");
+        Log.v("imgur", item.toString());
+
+
+        FullScreenImageFragment newFragment = FullScreenImageFragment.newInstance(item);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        // Replace whatever is in the fragment_container view with this fragment,
+        // and add the transaction to the back stack so the user can navigate back
+        transaction.replace(R.id.activity_main, newFragment);
+        transaction.addToBackStack(null);
+
+        // Commit the transaction
+        transaction.commit();
     }
 }

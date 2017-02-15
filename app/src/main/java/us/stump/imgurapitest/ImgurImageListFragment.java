@@ -20,8 +20,6 @@ import us.stump.imgurapitest.api.model.ImgurImage;
 import us.stump.imgurapitest.api.model.ImgurImagesResponse;
 import us.stump.imgurapitest.api.service.ImgurClient;
 import us.stump.imgurapitest.api.service.ImgurServiceGenerator;
-import us.stump.imgurapitest.dummy.DummyContent;
-import us.stump.imgurapitest.dummy.DummyContent.DummyItem;
 
 import java.util.List;
 
@@ -31,7 +29,7 @@ import java.util.List;
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class ImgurImageFragment extends Fragment {
+public class ImgurImageListFragment extends Fragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_ACCESS_TOKEN = "accessToken";
@@ -49,15 +47,15 @@ public class ImgurImageFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ImgurImageFragment() {
+    public ImgurImageListFragment() {
     }
 
-    public static ImgurImageFragment newInstance(ImgurAccessToken accessToken) {
-        return ImgurImageFragment.newInstance(accessToken, 0);
+    public static ImgurImageListFragment newInstance(ImgurAccessToken accessToken) {
+        return ImgurImageListFragment.newInstance(accessToken, 0);
     }
 
-    public static ImgurImageFragment newInstance(ImgurAccessToken accessToken, int columnCount) {
-        ImgurImageFragment fragment = new ImgurImageFragment();
+    public static ImgurImageListFragment newInstance(ImgurAccessToken accessToken, int columnCount) {
+        ImgurImageListFragment fragment = new ImgurImageListFragment();
         Bundle args = new Bundle();
         args.putParcelable(ARG_ACCESS_TOKEN, accessToken);
         args.putInt(ARG_COLUMN_COUNT, columnCount);
@@ -103,7 +101,7 @@ public class ImgurImageFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyImgurImageRecyclerViewAdapter(DummyContent.EMPTY_ITEMS, mListener));
+            recyclerView.setAdapter(new MyImgurImageRecyclerViewAdapter(mListener));
         }
         return view;
     }
@@ -162,26 +160,29 @@ public class ImgurImageFragment extends Fragment {
                     Log.v("imgur", Integer.toString(response.code()));
                     Log.v("imgur", response.message());
                     ImgurImagesResponse body = response.body();
-                    if (body != null) {
+
+                    if (response.isSuccessful() && body != null) {
                         Log.v("imgur", body.getStatus().toString());
                         Log.v("imgur", body.getSuccess().toString());
                         List<ImgurImage> data = body.getData();
 
-                        // TODO: Use the response data instead of the dummy content
-                        recyclerView.setAdapter(new MyImgurImageRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+                        if (body.getSuccess()) {
+                            MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+                            if (adapter != null) {
+                                adapter.setItemsAndNotify(data);
+                            }
 
-                        if (data != null)
-                        {
-                            int i;
-                            int length = data.size();
-                            for(i=0; i<length; i++)
-                            {
-                                ImgurImage image = data.get(i);
-                                Log.v("imgur", image.getLink());
+                            if (data != null) {
+                                int i;
+                                int length = data.size();
+                                Log.v("imgur", "Received "+Integer.toString(length)+" images");
+                                for (i = 0; i < length; i++) {
+                                    ImgurImage image = data.get(i);
+                                    Log.v("imgur", image.getLink());
+                                }
                             }
                         }
                     }
-
                 }
 
                 @Override
@@ -213,6 +214,6 @@ public class ImgurImageFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(ImgurImage item);
     }
 }
