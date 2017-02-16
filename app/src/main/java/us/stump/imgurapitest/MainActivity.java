@@ -1,12 +1,20 @@
 package us.stump.imgurapitest;
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -26,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements
         ImgurLoginFragment.OnImgurTokenReceivedListener,
         FullScreenImageFragment.OnDeleteButtonClickedListener
 {
+    private static final String FRAGMENT_TAG_LOGIN = "login";
+    private static final String FRAGMENT_TAG_OAUTH_LOGIN = "login";
+    private static final String FRAGMENT_TAG_GALLERY = "gallery";
+    private static final String FRAGEMENT_TAG_IMAGE_VIEW = "imageview";
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
 
 
@@ -33,6 +45,9 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // If we're being restored from a previous state,
         // then we don't need to do anything and should return or else
@@ -50,9 +65,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Add the fragment to the 'fragment_container' FrameLayout
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.activity_main, firstFragment).commit();
-
-        //clearAuthToken();
+                .add(R.id.fragement_container, firstFragment, FRAGMENT_TAG_LOGIN).commit();
 
         // check to see if we have an access token
         ImgurAccessToken accessToken = (ImgurAccessToken) getIntent().getParcelableExtra("accessToken");
@@ -61,6 +74,81 @@ public class MainActivity extends AppCompatActivity implements
         }
         if (accessToken != null && !accessToken.isExpired()) {
             OnImgurTokenReceived(accessToken);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.v("imgur", "onCreateOptionsMenu");
+
+        super.onCreateOptionsMenu(menu);
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add_image:
+                // User chose the "Add Image" item
+                Log.v("imgur", "Add an image!");
+                return true;
+
+            case R.id.action_logout:
+                // User chose the "Logout" item
+                Log.v("imgur", "Logout!");
+
+                //http://stackoverflow.com/a/2478662
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+                builder.setTitle("Logout");
+                builder.setMessage("Are you sure you want to log out of imgur?");
+
+                builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int which) {
+                        // log the user out
+                        logout();
+
+                        dialog.dismiss();
+                    }
+                });
+
+                builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        // Do nothing
+                        dialog.dismiss();
+                    }
+                });
+
+                AlertDialog alert = builder.create();
+                alert.show();
+
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void logout()
+    {
+        clearAuthToken();
+
+        clearBackStack();
+    }
+
+    private void clearBackStack() {
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        while (fragmentManager.getBackStackEntryCount() != 0) {
+            fragmentManager.popBackStackImmediate();
         }
     }
 
@@ -75,15 +163,14 @@ public class MainActivity extends AppCompatActivity implements
 
         // create the imgur login fragment
         // this is the fragment that will perform the OAuth 2 handshake and give us an access token
-        ImgurLoginFragment newFragment = ImgurLoginFragment.newInstance(imgurAppId, imgurAppSecret);
         ImgurLoginFragment newFragment = ImgurLoginFragment.newInstance(imgurAppId, imgurAppSecret, imgurAppRedirect);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.activity_main, newFragment);
-        transaction.addToBackStack(null);
+        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.addToBackStack(FRAGMENT_TAG_OAUTH_LOGIN);
 
         // Commit the transaction
         transaction.commit();
@@ -139,25 +226,14 @@ public class MainActivity extends AppCompatActivity implements
 
         if (auth_token.isExpired()) {
             Log.v("imgur", "Token Is expired!");
-            clearAuthToken();
-
-            LoginButtonFragment newFragment = new LoginButtonFragment();
-
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.activity_main, newFragment);
-            transaction.addToBackStack(null);
-
-            // Commit the transaction
-            transaction.commit();
+            logout();
             return;
         }
 
         // store the auth token for future reference
         storeAuthToken(auth_token);
 
+        getSupportFragmentManager().popBackStack(FRAGMENT_TAG_OAUTH_LOGIN, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         ImgurImageListFragment newFragment = ImgurImageListFragment.newInstance(auth_token);
 
@@ -165,8 +241,8 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.activity_main, newFragment);
-        transaction.addToBackStack(null);
+        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.addToBackStack(FRAGMENT_TAG_GALLERY);
 
         // Commit the transaction
         transaction.commit();
@@ -184,18 +260,50 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.activity_main, newFragment);
-        transaction.addToBackStack(null);
+        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.addToBackStack(FRAGEMENT_TAG_IMAGE_VIEW);
 
         // Commit the transaction
         transaction.commit();
     }
 
-    public void onDeleteButtonClicked(ImgurImage item)
+    public void onDeleteButtonClicked(final ImgurImage item)
     {
         Log.v("imgur", "Image Delete Tapped!!");
         Log.v("imgur", item.toString());
 
+        //http://stackoverflow.com/a/2478662
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("Logout");
+        builder.setMessage("Are you sure you want to log out of imgur?");
+
+        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int which) {
+                // actually delete the image
+                deleteImage(item);
+
+                dialog.dismiss();
+            }
+        });
+
+        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                // Do nothing
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void deleteImage(ImgurImage item)
+    {
         createImgurClient(this.retrieveAuthToken());
 
         Call<Void> call = client.deleteImage("me", item.getDeletehash());

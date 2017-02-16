@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="us.stump.imgurapitest.MainActivity">
+
+    <!-- Add Image -->
+    <item
+        android:id="@+id/action_add_image"
+        android:icon="@drawable/ic_add_a_photo_white_48dp"
+        android:title="@string/action_add_image"
+        app:showAsAction="ifRoom"
+        android:visible="false"/>
+
+    <!-- Logout -->
+    <item
+        android:id="@+id/action_logout"
+        android:icon="@drawable/ic_logout_white_48dp"
+        android:title="@string/action_logout"
+        app:showAsAction="ifRoom"/>
+
+    <!-- Settings, should always be in the overflow -->
+    <!--<item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+        app:showAsAction="never" />-->
+</menu>

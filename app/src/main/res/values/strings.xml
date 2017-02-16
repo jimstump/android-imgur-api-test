@@ -3,4 +3,7 @@
     <string name="imgur_welcome_text">Imgur API Test</string>
     <string name="imgur_login_button_text">Login to Imgur</string>
     <string name="title_activity_login_redirect_handler">LoginRedirectHandlerActivity</string>
+    <string name="action_add_image">Add Image</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_settings">Settings</string>
 </resources>
