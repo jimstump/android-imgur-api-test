@@ -31,13 +31,13 @@ import java.util.List;
  */
 public class ImgurImageListFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
     private static final String ARG_ACCESS_TOKEN = "accessToken";
     private static final String ARG_COLUMN_COUNT = "column-count";
 
-    // TODO: Customize parameters
     private int mColumnCount = 2;
     private ImgurAccessToken accessToken;
+
+    private List<ImgurImage> images;
 
     private ImgurClient client;
     private RecyclerView recyclerView;
@@ -145,60 +145,67 @@ public class ImgurImageListFragment extends Fragment {
     private void loadUserImages()
     {
         Log.v("imgur", "loadUserImages");
-        if (accessToken != null) {
-            createImgurClient(accessToken);
+        if (images == null) {
+            if (accessToken != null) {
+                createImgurClient(accessToken);
 
-            Call<ImgurImagesResponse> call = client.imagesForUser("me", 0);
+                Call<ImgurImagesResponse> call = client.imagesForUser("me", 0);
 
-            call.enqueue(new Callback<ImgurImagesResponse>() {
-                @Override
-                public void onResponse(Call<ImgurImagesResponse> call, Response<ImgurImagesResponse> response) {
-                    // The network call was a success and we got a response
-                    // TODO: use the repository list and display it
-                    Log.e("imgur", "API request succeeded");
-                    Log.v("imgur", Boolean.toString(response.isSuccessful()));
-                    Log.v("imgur", Integer.toString(response.code()));
-                    Log.v("imgur", response.message());
-                    ImgurImagesResponse body = response.body();
+                call.enqueue(new Callback<ImgurImagesResponse>() {
+                    @Override
+                    public void onResponse(Call<ImgurImagesResponse> call, Response<ImgurImagesResponse> response) {
+                        // The network call was a success and we got a response
+                        // TODO: use the repository list and display it
+                        Log.e("imgur", "API request succeeded");
+                        Log.v("imgur", Boolean.toString(response.isSuccessful()));
+                        Log.v("imgur", Integer.toString(response.code()));
+                        Log.v("imgur", response.message());
+                        ImgurImagesResponse body = response.body();
 
-                    if (response.isSuccessful() && body != null) {
-                        Log.v("imgur", body.getStatus().toString());
-                        Log.v("imgur", body.getSuccess().toString());
-                        List<ImgurImage> data = body.getData();
+                        if (response.isSuccessful() && body != null) {
+                            Log.v("imgur", body.getStatus().toString());
+                            Log.v("imgur", body.getSuccess().toString());
+                            images = body.getData();
 
-                        if (body.getSuccess()) {
-                            MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
-                            if (adapter != null) {
-                                adapter.setItemsAndNotify(data);
-                            }
+                            if (body.getSuccess()) {
+                                MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+                                if (adapter != null) {
+                                    adapter.setItemsAndNotify(images);
+                                }
 
-                            if (data != null) {
-                                int i;
-                                int length = data.size();
-                                Log.v("imgur", "Received "+Integer.toString(length)+" images");
-                                for (i = 0; i < length; i++) {
-                                    ImgurImage image = data.get(i);
-                                    Log.v("imgur", image.getLink());
+                                if (images != null) {
+                                    int i;
+                                    int length = images.size();
+                                    Log.v("imgur", "Received " + Integer.toString(length) + " images");
+                                    for (i = 0; i < length; i++) {
+                                        ImgurImage image = images.get(i);
+                                        Log.v("imgur", image.getLink());
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                @Override
-                public void onFailure(Call<ImgurImagesResponse> call, Throwable t) {
-                    // the network call was a failure
-                    // TODO: handle error
-                    Log.e("imgur", "API request failed");
-                    Log.e("imgur", t.getMessage());
-                    Log.e("imgur", call.request().toString());
-                    RequestBody body = call.request().body();
-                    if(body != null)
-                        Log.e("imgur", body.toString());
-                    else
-                        Log.e("imgur", "null");
-                }
-            });
+                    @Override
+                    public void onFailure(Call<ImgurImagesResponse> call, Throwable t) {
+                        // the network call was a failure
+                        // TODO: handle error
+                        Log.e("imgur", "API request failed");
+                        Log.e("imgur", t.getMessage());
+                        Log.e("imgur", call.request().toString());
+                        RequestBody body = call.request().body();
+                        if (body != null)
+                            Log.e("imgur", body.toString());
+                        else
+                            Log.e("imgur", "null");
+                    }
+                });
+            }
+        } else {
+            MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+            if (adapter != null) {
+                adapter.setItemsAndNotify(images);
+            }
         }
     }
 
