@@ -3,6 +3,7 @@ package us.stump.imgurapitest.api.service;
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.http.DELETE;
 import retrofit2.http.Field;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
@@ -40,4 +41,13 @@ public interface ImgurClient {
      */
     @POST("image")
     Call<ImgurBasicResponse> addImage(@Field("image") String base64ImageData);
+
+    /**
+     * Delete a new image
+     * @param username
+     * @param deletehash
+     * @return
+     */
+    @DELETE("account/{username}/image/{deletehash}")
+    Call<Void> deleteImage(@Path("username") String username, @Path("deletehash") String deletehash);
 }

@@ -11,13 +11,20 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import us.stump.imgurapitest.api.model.ImgurAccessToken;
 import us.stump.imgurapitest.api.model.ImgurImage;
+import us.stump.imgurapitest.api.service.ImgurClient;
+import us.stump.imgurapitest.api.service.ImgurServiceGenerator;
 
 public class MainActivity extends AppCompatActivity implements
         LoginButtonFragment.OnLoginButtonClickedListener,
         ImgurImageListFragment.OnListFragmentInteractionListener,
-        ImgurLoginFragment.OnImgurTokenReceivedListener
+        ImgurLoginFragment.OnImgurTokenReceivedListener,
+        FullScreenImageFragment.OnDeleteButtonClickedListener
 {
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
 
@@ -180,5 +187,54 @@ public class MainActivity extends AppCompatActivity implements
 
         // Commit the transaction
         transaction.commit();
+    }
+
+    public void onDeleteButtonClicked(ImgurImage item)
+    {
+        Log.v("imgur", "Image Delete Tapped!!");
+        Log.v("imgur", item.toString());
+
+        createImgurClient(this.retrieveAuthToken());
+
+        Call<Void> call = client.deleteImage("me", item.getDeletehash());
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                // The network call was a success and we got a response
+                Log.e("imgur", "API DELETE request succeeded");
+                Log.v("imgur", Boolean.toString(response.isSuccessful()));
+                Log.v("imgur", Integer.toString(response.code()));
+                Log.v("imgur", response.message());
+
+                if (response.isSuccessful()) {
+                    // TODO: go "back"
+                    // TODO: remove item from list and refresh view
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                // the network call was a failure
+                // TODO: handle error
+                Log.e("imgur", "API DELETE request failed");
+                Log.e("imgur", t.getMessage());
+                Log.e("imgur", call.request().toString());
+                RequestBody body = call.request().body();
+                if (body != null)
+                    Log.e("imgur", body.toString());
+                else
+                    Log.e("imgur", "null");
+            }
+        });
+    }
+
+
+    private ImgurClient client;
+    private void createImgurClient(ImgurAccessToken auth_token)
+    {
+        if (client == null) {
+            client = ImgurServiceGenerator.createService(ImgurClient.class, auth_token.toAuthorizationHeader());
+        }
     }
 }
