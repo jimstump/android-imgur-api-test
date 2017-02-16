@@ -18,3 +18,12 @@ for your Imgur API Application.
 * View all images associated with your Imgur account
 * Upload new images to your Imgur account
 * Delete images from your Imgur account
+
+## Acknowledgements
+* Icons
+	* [Logout](https://materialdesignicons.com/icon/logout) by Austin Andrews
+	* [Add a Photo](https://material.io/icons/#ic_add_a_photo) by material.io
+* Libraries
+	* [Retrofit](https://square.github.io/retrofit/) by Square
+	* [GSON](https://github.com/google/gson) by Google
+	* [Glide](https://github.com/bumptech/glide)
