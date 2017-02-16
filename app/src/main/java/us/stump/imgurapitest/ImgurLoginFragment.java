@@ -35,11 +35,18 @@ import us.stump.imgurapitest.api.model.ImgurAccessToken;
 public class ImgurLoginFragment extends Fragment {
     private static final String ARG_IMGUR_APP_ID = "imgur_app_id";
     private static final String ARG_IMGUR_APP_SECRET = "imgur_app_secret";
+    private static final String ARG_IMGUR_APP_REDIRECT = "imgur_app_redirect";
 
     private static final String OATH_AUTHORIZE_BASE = "https://api.imgur.com/oauth2/authorize";
 
     private String imgurAppId;
     private String imgurAppSecret;
+
+    private String imgurAppRedirect;
+
+    public String getImgurAppRedirect() {
+        return imgurAppRedirect;
+    }
 
     private WebView loginWebview;
 
@@ -57,11 +64,12 @@ public class ImgurLoginFragment extends Fragment {
      * @param imgurAppSecret app_secret used with the Imgur API.
      * @return A new instance of fragment ImgurLoginFragment.
      */
-    public static ImgurLoginFragment newInstance(String imgurAppId, String imgurAppSecret) {
+    public static ImgurLoginFragment newInstance(String imgurAppId, String imgurAppSecret, String imgurAppRedirect) {
         ImgurLoginFragment fragment = new ImgurLoginFragment();
         Bundle args = new Bundle();
         args.putString(ARG_IMGUR_APP_ID, imgurAppId);
         args.putString(ARG_IMGUR_APP_SECRET, imgurAppSecret);
+        args.putString(ARG_IMGUR_APP_REDIRECT, imgurAppRedirect);
         fragment.setArguments(args);
         return fragment;
     }
@@ -72,6 +80,7 @@ public class ImgurLoginFragment extends Fragment {
         if (getArguments() != null) {
             imgurAppId = getArguments().getString(ARG_IMGUR_APP_ID);
             imgurAppSecret = getArguments().getString(ARG_IMGUR_APP_SECRET);
+            imgurAppRedirect = getArguments().getString(ARG_IMGUR_APP_REDIRECT);
         }
     }
 
@@ -224,10 +233,20 @@ public class ImgurLoginFragment extends Fragment {
 
         private boolean isAppRedirect(Uri url)
         {
-            List<String> params = url.getPathSegments();
+            if (url == null){
+                return false;
+            }
+
+            String appRedirect = loginFragment.getImgurAppRedirect();
+
+            if (appRedirect == null){
+                return false;
+            }
+
+            Uri urlNoFragment = url.buildUpon().fragment("").build();
             String fragment = url.getFragment();
 
-            return (url.getHost().equals("appredirects.stump.us") && !params.isEmpty() && params.get(0).equals("imgurapitest") && !TextUtils.isEmpty(fragment));
+            return urlNoFragment.toString().equals(appRedirect) && !TextUtils.isEmpty(fragment);
         }
 
         private void handleAppRedirect(WebView view, Uri url)

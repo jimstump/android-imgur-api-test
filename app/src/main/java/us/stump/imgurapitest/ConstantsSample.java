@@ -14,6 +14,7 @@ package us.stump.imgurapitest;
 final class ConstantsSample {
     public static final String SECRET_IMGUR_APP_ID = "imgurAppId";
     public static final String SECRET_IMGUR_APP_SECRET = "imgurAppSecret";
+    public static final String SECRET_IMGUR_APP_CALLBACK_URL = "imgurAppCallbackUrl";
 
     /**
      * There is no reason to ever call this.
@@ -38,6 +39,9 @@ final class ConstantsSample {
                 return "";
 
             case SECRET_IMGUR_APP_SECRET:
+                return "";
+
+            case SECRET_IMGUR_APP_CALLBACK_URL:
                 return "";
         }
 
