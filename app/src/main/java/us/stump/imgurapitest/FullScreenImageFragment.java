@@ -3,6 +3,7 @@ package us.stump.imgurapitest;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -113,6 +114,7 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
                     @Override
                     public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
                         Log.e("imgur", "Image Load FAILED - "+e.toString());
+                        toastErrorMessage("Couldn't download image.  Please try again later.");
                         if (progressBar != null) {
                             progressBar.setVisibility(View.GONE);
                         }
@@ -156,6 +158,13 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
         progressBar = null;
         deleteImageBtn.setOnClickListener(null);
         deleteImageBtn = null;
+    }
+
+    public void toastErrorMessage(String error) {
+        if (imageView != null) {
+            Snackbar.make(imageView, error, Snackbar.LENGTH_LONG)
+                    .show();
+        }
     }
 
     /**

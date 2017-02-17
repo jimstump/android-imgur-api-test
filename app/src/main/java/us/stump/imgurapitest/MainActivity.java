@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -356,7 +357,6 @@ public class MainActivity extends AppCompatActivity implements
         Log.v("imgur", "Image Tapped!!");
         Log.v("imgur", item.toString());
 
-
         FullScreenImageFragment newFragment = FullScreenImageFragment.newInstance(item);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
@@ -400,20 +400,25 @@ public class MainActivity extends AppCompatActivity implements
         try {
             in = getContentResolver().openInputStream(fileUri);
         } catch (FileNotFoundException e) {
+            toastErrorMessage("Couldn't read the new image.  Please try another one.");
             e.printStackTrace();
             return;
         }
 
         if (in == null) {
+            toastErrorMessage("Couldn't read the new image.  Please try another one.");
             Log.e("imgur", "InputStream is null");
+            return;
         }
 
         byte[] inBytes = readInputStream(in);
 
         if (inBytes == null) {
+            toastErrorMessage("Couldn't read the new image.  Please try another one.");
             Log.e("imgur", "inBytes is null");
             return;
         } else if (inBytes.length == 0) {
+            toastErrorMessage("The image file is empty.  Please try another one.");
             Log.e("imgur", "inBytes is empty");
             return;
         }
@@ -466,6 +471,7 @@ public class MainActivity extends AppCompatActivity implements
 
             @Override
             public void onFailure(Call<ImgurBasicResponse> call, Throwable t) {
+                toastErrorMessage("Couln't upload your image.  Please try again later.");
                 Log.e("Upload error:", t.getMessage());
             }
         });
@@ -560,6 +566,7 @@ public class MainActivity extends AppCompatActivity implements
             public void onFailure(Call<Void> call, Throwable t) {
                 // the network call was a failure
                 // TODO: handle error
+                toastErrorMessage("Couln't delete your image.  Please try again later.");
                 Log.e("imgur", "API DELETE request failed");
                 Log.e("imgur", t.getMessage());
                 Log.e("imgur", call.request().toString());
@@ -572,6 +579,10 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
+    public void toastErrorMessage(String error) {
+        Snackbar.make(findViewById(R.id.main_content), error, Snackbar.LENGTH_LONG)
+                .show();
+    }
 
     private ImgurClient client;
     private void createImgurClient(ImgurAccessToken auth_token)

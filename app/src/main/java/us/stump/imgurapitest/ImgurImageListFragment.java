@@ -3,6 +3,7 @@ package us.stump.imgurapitest;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -191,7 +192,6 @@ public class ImgurImageListFragment extends Fragment {
                     @Override
                     public void onResponse(Call<ImgurImagesResponse> call, Response<ImgurImagesResponse> response) {
                         // The network call was a success and we got a response
-                        // TODO: use the repository list and display it
                         Log.e("imgur", "API request succeeded");
                         Log.v("imgur", Boolean.toString(response.isSuccessful()));
                         Log.v("imgur", Integer.toString(response.code()));
@@ -240,7 +240,7 @@ public class ImgurImageListFragment extends Fragment {
                     @Override
                     public void onFailure(Call<ImgurImagesResponse> call, Throwable t) {
                         // the network call was a failure
-                        // TODO: handle error
+                        toastErrorMessage("Couln't get your images.  Please try again later.");
                         Log.e("imgur", "API request failed");
                         Log.e("imgur", t.getMessage());
                         Log.e("imgur", call.request().toString());
@@ -305,6 +305,13 @@ public class ImgurImageListFragment extends Fragment {
 
         // 3. Reset endless scroll listener when performing a new search
         scrollListener.resetState();
+    }
+
+    public void toastErrorMessage(String error) {
+        if (recyclerView != null) {
+            Snackbar.make(recyclerView, error, Snackbar.LENGTH_LONG)
+                    .show();
+        }
     }
 
     /**
