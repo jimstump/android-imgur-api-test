@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onPrepareOptionsMenu(menu);
 
         MenuItem addImageButton = menu.findItem(R.id.action_add_image);
+        MenuItem refreshButton = menu.findItem(R.id.action_refresh);
         MenuItem logoutButton = menu.findItem(R.id.action_logout);
 
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -109,6 +110,9 @@ public class MainActivity extends AppCompatActivity implements
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
             }
+            if (refreshButton != null) {
+                refreshButton.setVisible(false);
+            }
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
             }
@@ -116,6 +120,9 @@ public class MainActivity extends AppCompatActivity implements
             //Log.v("imgur", "we are on the imgur OAuth login screen");
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
+            }
+            if (refreshButton != null) {
+                refreshButton.setVisible(false);
             }
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
@@ -125,6 +132,9 @@ public class MainActivity extends AppCompatActivity implements
             if (addImageButton != null) {
                 addImageButton.setVisible(true);
             }
+            if (refreshButton != null) {
+                refreshButton.setVisible(true);
+            }
             if (logoutButton != null) {
                 logoutButton.setVisible(true);
             }
@@ -133,6 +143,9 @@ public class MainActivity extends AppCompatActivity implements
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
             }
+            if (refreshButton != null) {
+                refreshButton.setVisible(false);
+            }
             if (logoutButton != null) {
                 logoutButton.setVisible(true);
             }
@@ -140,6 +153,9 @@ public class MainActivity extends AppCompatActivity implements
             //Log.v("imgur", "what screen is this?");
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
+            }
+            if (refreshButton != null) {
+                refreshButton.setVisible(false);
             }
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
@@ -157,6 +173,18 @@ public class MainActivity extends AppCompatActivity implements
                 Log.v("imgur", "Add an image!");
 
                 onAddButtonClicked();
+
+                return true;
+
+            case R.id.action_refresh:
+                // User chose the "Add Image" item
+                Log.v("imgur", "Refresh!");
+
+                ImgurImageListFragment gallery = (ImgurImageListFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_GALLERY);
+
+                if (gallery != null){
+                    gallery.refreshList();
+                }
 
                 return true;
 
