@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Add the fragment to the 'fragment_container' FrameLayout
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragement_container, firstFragment, FRAGMENT_TAG_LOGIN).commit();
+                .add(R.id.fragment_container, firstFragment, FRAGMENT_TAG_LOGIN).commit();
 
         // check to see if we have an access token
         ImgurAccessToken accessToken = getIntent().getParcelableExtra("accessToken");
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment, FRAGMENT_TAG_OAUTH_LOGIN);
+        transaction.replace(R.id.fragment_container, newFragment);
         transaction.addToBackStack(FRAGMENT_TAG_OAUTH_LOGIN);
 
         // Commit the transaction
@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment, FRAGMENT_TAG_GALLERY);
+        transaction.replace(R.id.fragment_container, newFragment);
         transaction.addToBackStack(FRAGMENT_TAG_GALLERY);
 
         // Commit the transaction
@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment, FRAGEMENT_TAG_IMAGE_VIEW);
+        transaction.replace(R.id.fragment_container, newFragment);
         transaction.addToBackStack(FRAGEMENT_TAG_IMAGE_VIEW);
 
         // Commit the transaction
