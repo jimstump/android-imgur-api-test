@@ -3,6 +3,7 @@ package us.stump.imgurapitest;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -33,9 +34,9 @@ public class MainActivity extends AppCompatActivity implements
         FullScreenImageFragment.OnDeleteButtonClickedListener
 {
     private static final String FRAGMENT_TAG_LOGIN = "login";
-    private static final String FRAGMENT_TAG_OAUTH_LOGIN = "login";
+    private static final String FRAGMENT_TAG_OAUTH_LOGIN = "oauthlogin";
     private static final String FRAGMENT_TAG_GALLERY = "gallery";
-    private static final String FRAGEMENT_TAG_IMAGE_VIEW = "imageview";
+    private static final String FRAGMENT_TAG_IMAGE_VIEW = "imageview";
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
 
 
@@ -54,24 +55,16 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
 
-        // create our LoginFragement, which is kind of like a splash screen with a login button
-        LoginButtonFragment firstFragment = new LoginButtonFragment();
-
-        // In case this activity was started with special instructions from an
-        // Intent, pass the Intent's extras to the fragment as arguments
-        firstFragment.setArguments(getIntent().getExtras());
-
-        // Add the fragment to the 'fragment_container' FrameLayout
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, firstFragment, FRAGMENT_TAG_LOGIN).commit();
-
         // check to see if we have an access token
-        ImgurAccessToken accessToken = getIntent().getParcelableExtra("accessToken");
-        if (accessToken == null) {
-            accessToken = retrieveAuthToken();
-        }
+        ImgurAccessToken accessToken = retrieveAuthToken();
+
         if (accessToken != null && !accessToken.isExpired()) {
+            // handle the access token
             OnImgurTokenReceived(accessToken);
+        } else {
+            // logout, (which will clear the access token if it was expired
+            // and show the login button screen
+            logout();
         }
     }
 
@@ -87,11 +80,68 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        //Log.v("imgur", "onPrepareOptionsMenu");
+        super.onPrepareOptionsMenu(menu);
+
+        MenuItem addImageButton = menu.findItem(R.id.action_add_image);
+        MenuItem logoutButton = menu.findItem(R.id.action_logout);
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment f;
+
+        if ((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_LOGIN)) != null && f.isVisible()) {
+            //Log.v("imgur", "we are on the main login screen (the default screen)");
+            if (addImageButton != null) {
+                addImageButton.setVisible(false);
+            }
+            if (logoutButton != null) {
+                logoutButton.setVisible(false);
+            }
+        } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_OAUTH_LOGIN)) != null && f.isVisible()) {
+            //Log.v("imgur", "we are on the imgur OAuth login screen");
+            if (addImageButton != null) {
+                addImageButton.setVisible(false);
+            }
+            if (logoutButton != null) {
+                logoutButton.setVisible(false);
+            }
+        } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY)) != null && f.isVisible()) {
+            //Log.v("imgur", "we are on the image gallery screen");
+            if (addImageButton != null) {
+                addImageButton.setVisible(true);
+            }
+            if (logoutButton != null) {
+                logoutButton.setVisible(true);
+            }
+        } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_IMAGE_VIEW)) != null && f.isVisible()) {
+            //Log.v("imgur", "we are on the single image screen");
+            if (addImageButton != null) {
+                addImageButton.setVisible(false);
+            }
+            if (logoutButton != null) {
+                logoutButton.setVisible(true);
+            }
+        } else {
+            //Log.v("imgur", "what screen is this?");
+            if (addImageButton != null) {
+                addImageButton.setVisible(false);
+            }
+            if (logoutButton != null) {
+                logoutButton.setVisible(false);
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add_image:
                 // User chose the "Add Image" item
                 Log.v("imgur", "Add an image!");
+
                 return true;
 
             case R.id.action_logout:
@@ -141,6 +191,17 @@ public class MainActivity extends AppCompatActivity implements
         clearAuthToken();
 
         clearBackStack();
+
+        LoginButtonFragment newFragment = new LoginButtonFragment();
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        // Replace whatever is in the fragment_container view with this fragment,
+        // and add the transaction to the back stack so the user can navigate back
+        transaction.replace(R.id.fragment_container, newFragment, FRAGMENT_TAG_LOGIN);
+
+        // Commit the transaction
+        transaction.commit();
     }
 
     private void clearBackStack() {
@@ -167,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragment_container, newFragment);
+        transaction.replace(R.id.fragment_container, newFragment, FRAGMENT_TAG_OAUTH_LOGIN);
         transaction.addToBackStack(FRAGMENT_TAG_OAUTH_LOGIN);
 
         // Commit the transaction
@@ -231,16 +292,17 @@ public class MainActivity extends AppCompatActivity implements
         // store the auth token for future reference
         storeAuthToken(auth_token);
 
-        getSupportFragmentManager().popBackStack(FRAGMENT_TAG_OAUTH_LOGIN, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        //getSupportFragmentManager().popBackStack(FRAGMENT_TAG_OAUTH_LOGIN, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        clearBackStack();
 
         ImgurImageListFragment newFragment = ImgurImageListFragment.newInstance(auth_token);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         // Replace whatever is in the fragment_container view with this fragment,
-        // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragment_container, newFragment);
-        transaction.addToBackStack(FRAGMENT_TAG_GALLERY);
+        // and DO NOT add the transaction to the back stack since we don't want the user to
+        // be able to navigate back
+        transaction.replace(R.id.fragment_container, newFragment, FRAGMENT_TAG_GALLERY);
 
         // Commit the transaction
         transaction.commit();
@@ -258,8 +320,8 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragment_container, newFragment);
-        transaction.addToBackStack(FRAGEMENT_TAG_IMAGE_VIEW);
+        transaction.replace(R.id.fragment_container, newFragment, FRAGMENT_TAG_IMAGE_VIEW);
+        transaction.addToBackStack(FRAGMENT_TAG_IMAGE_VIEW);
 
         // Commit the transaction
         transaction.commit();
@@ -318,7 +380,7 @@ public class MainActivity extends AppCompatActivity implements
                 FragmentManager fragmentManager = getSupportFragmentManager();
                 if (response.isSuccessful() && !fragmentManager.isDestroyed()) {
                     // go "back"
-                    fragmentManager.popBackStackImmediate(FRAGEMENT_TAG_IMAGE_VIEW, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    fragmentManager.popBackStackImmediate(FRAGMENT_TAG_IMAGE_VIEW, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
                     // remove item from list and refresh view
                     ImgurImageListFragment gallery = (ImgurImageListFragment) fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY);

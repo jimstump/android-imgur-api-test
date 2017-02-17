@@ -47,6 +47,11 @@ public class LoginButtonFragment extends Fragment implements View.OnClickListene
         login_button.setOnClickListener(this);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().invalidateOptionsMenu();
+    }
 
     public void onClick(final View v) { //check for what button is pressed
         switch (v.getId()) {

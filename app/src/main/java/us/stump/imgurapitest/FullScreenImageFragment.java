@@ -80,6 +80,11 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
         loadImage(image.getLink());
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().invalidateOptionsMenu();
+    }
 
     public void onClick(final View v) { //check for what button is pressed
         switch (v.getId()) {

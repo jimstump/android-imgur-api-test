@@ -109,6 +109,12 @@ public class ImgurLoginFragment extends Fragment {
         loginWebview.loadUrl(generateLoginUrl().toString());
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().invalidateOptionsMenu();
+    }
+
     @SuppressWarnings("deprecation")
     // http://stackoverflow.com/a/31950789
     public void clearCookies()

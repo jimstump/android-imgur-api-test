@@ -127,6 +127,12 @@ public class ImgurImageListFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().invalidateOptionsMenu();
+    }
+
+    @Override
     public void onDetach() {
         super.onDetach();
         accessToken = null;
