@@ -13,7 +13,6 @@ package us.stump.imgurapitest;
  */
 final class ConstantsSample {
     public static final String SECRET_IMGUR_APP_ID = "imgurAppId";
-    public static final String SECRET_IMGUR_APP_SECRET = "imgurAppSecret";
     public static final String SECRET_IMGUR_APP_CALLBACK_URL = "imgurAppCallbackUrl";
 
     /**
@@ -36,9 +35,6 @@ final class ConstantsSample {
         switch (secretName)
         {
             case SECRET_IMGUR_APP_ID:
-                return "";
-
-            case SECRET_IMGUR_APP_SECRET:
                 return "";
 
             case SECRET_IMGUR_APP_CALLBACK_URL:

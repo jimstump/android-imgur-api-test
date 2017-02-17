@@ -233,12 +233,11 @@ public class MainActivity extends AppCompatActivity implements
 
         // pull our imgur API app's app_id and app_secret
         String imgurAppId = Constants.getStoredSecret(Constants.SECRET_IMGUR_APP_ID);
-        String imgurAppSecret = Constants.getStoredSecret(Constants.SECRET_IMGUR_APP_SECRET);
         String imgurAppRedirect = Constants.getStoredSecret(Constants.SECRET_IMGUR_APP_CALLBACK_URL);
 
         // create the imgur login fragment
         // this is the fragment that will perform the OAuth 2 handshake and give us an access token
-        ImgurLoginFragment newFragment = ImgurLoginFragment.newInstance(imgurAppId, imgurAppSecret, imgurAppRedirect);
+        ImgurLoginFragment newFragment = ImgurLoginFragment.newInstance(imgurAppId, imgurAppRedirect);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 

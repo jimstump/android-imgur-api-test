@@ -34,14 +34,11 @@ import us.stump.imgurapitest.api.model.ImgurAccessToken;
  */
 public class ImgurLoginFragment extends Fragment {
     private static final String ARG_IMGUR_APP_ID = "imgur_app_id";
-    private static final String ARG_IMGUR_APP_SECRET = "imgur_app_secret";
     private static final String ARG_IMGUR_APP_REDIRECT = "imgur_app_redirect";
 
     private static final String OATH_AUTHORIZE_BASE = "https://api.imgur.com/oauth2/authorize";
 
     private String imgurAppId;
-    private String imgurAppSecret;
-
     private String imgurAppRedirect;
 
     public String getImgurAppRedirect() {
@@ -61,14 +58,13 @@ public class ImgurLoginFragment extends Fragment {
      * this fragment using the provided parameters.
      *
      * @param imgurAppId app_id used with the Imgur API.
-     * @param imgurAppSecret app_secret used with the Imgur API.
+     * @param imgurAppRedirect Authorization callback URL of the imgur app.
      * @return A new instance of fragment ImgurLoginFragment.
      */
-    public static ImgurLoginFragment newInstance(String imgurAppId, String imgurAppSecret, String imgurAppRedirect) {
+    public static ImgurLoginFragment newInstance(String imgurAppId, String imgurAppRedirect) {
         ImgurLoginFragment fragment = new ImgurLoginFragment();
         Bundle args = new Bundle();
         args.putString(ARG_IMGUR_APP_ID, imgurAppId);
-        args.putString(ARG_IMGUR_APP_SECRET, imgurAppSecret);
         args.putString(ARG_IMGUR_APP_REDIRECT, imgurAppRedirect);
         fragment.setArguments(args);
         return fragment;
@@ -79,7 +75,6 @@ public class ImgurLoginFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             imgurAppId = getArguments().getString(ARG_IMGUR_APP_ID);
-            imgurAppSecret = getArguments().getString(ARG_IMGUR_APP_SECRET);
             imgurAppRedirect = getArguments().getString(ARG_IMGUR_APP_REDIRECT);
         }
     }
