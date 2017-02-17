@@ -27,3 +27,4 @@ for your Imgur API Application.
 	* [Retrofit](https://square.github.io/retrofit/) by Square
 	* [GSON](https://github.com/google/gson) by Google
 	* [Glide](https://github.com/bumptech/glide)
+	* [aFileChooser](https://github.com/iPaulPro/aFileChooser) (Specifically using the FileUtils class)

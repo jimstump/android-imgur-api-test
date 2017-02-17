@@ -2,11 +2,14 @@ package us.stump.imgurapitest.api.service;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.DELETE;
 import retrofit2.http.Field;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import us.stump.imgurapitest.api.model.ImgurBasicResponse;
 import us.stump.imgurapitest.api.model.ImgurImage;
@@ -36,11 +39,11 @@ public interface ImgurClient {
 
     /**
      * Upload a new image
-     * @param base64ImageData
      * @return
      */
+    @Multipart
     @POST("image")
-    Call<ImgurBasicResponse> addImage(@Field("image") String base64ImageData);
+    Call<ImgurBasicResponse> addImage(@Part MultipartBody.Part image);
 
     /**
      * Delete a new image

@@ -1,7 +1,9 @@
 package us.stump.imgurapitest;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,14 +20,25 @@ import android.view.MenuItem;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import us.stump.imgurapitest.api.model.ImgurAccessToken;
+import us.stump.imgurapitest.api.model.ImgurBasicResponse;
 import us.stump.imgurapitest.api.model.ImgurImage;
 import us.stump.imgurapitest.api.service.ImgurClient;
 import us.stump.imgurapitest.api.service.ImgurServiceGenerator;
+
+import com.ipaulpro.afilechooser.utils.FileUtils;
 
 public class MainActivity extends AppCompatActivity implements
         LoginButtonFragment.OnLoginButtonClickedListener,
@@ -39,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String FRAGMENT_TAG_IMAGE_VIEW = "imageview";
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
 
+    private int PICK_IMAGE_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +155,8 @@ public class MainActivity extends AppCompatActivity implements
             case R.id.action_add_image:
                 // User chose the "Add Image" item
                 Log.v("imgur", "Add an image!");
+
+                onAddButtonClicked();
 
                 return true;
 
@@ -325,6 +341,128 @@ public class MainActivity extends AppCompatActivity implements
 
         // Commit the transaction
         transaction.commit();
+    }
+
+    public void onAddButtonClicked()
+    {
+        Intent intent = new Intent();
+        // Show only images, no videos or anything else
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        // Always show the chooser (if there are multiple options available)
+        startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+
+            Uri uri = data.getData();
+            Log.v("imgur", "Received image: "+uri.toString());
+
+            uploadFile(uri);
+        }
+    }
+
+    private void uploadFile(Uri fileUri) {
+        Log.v("imgur", "uploadFile: fileuri = "+fileUri.toString());
+
+        InputStream in;
+        try {
+            in = getContentResolver().openInputStream(fileUri);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (in == null) {
+            Log.e("imgur", "InputStream is null");
+        }
+
+        byte[] inBytes = readInputStream(in);
+
+        if (inBytes == null) {
+            Log.e("imgur", "inBytes is null");
+            return;
+        } else if (inBytes.length == 0) {
+            Log.e("imgur", "inBytes is empty");
+            return;
+        }
+
+        createImgurClient(this.retrieveAuthToken());
+
+        String filename = null;
+        MediaType contentType = MediaType.parse(getContentResolver().getType(fileUri));
+
+        File file = FileUtils.getFile(this, fileUri);
+
+        if (file != null) {
+            Log.v("imgur", "uploadFile: file = : " + file.toString());
+            filename = file.getName();
+        } else {
+            Log.e("imgur", "uploadFile: file is null");
+        }
+
+
+        // create RequestBody instance from file
+        /*RequestBody requestFile = RequestBody.create(
+                        MediaType.parse(getContentResolver().getType(fileUri)),
+                        file
+                );*/
+        RequestBody requestFile = RequestBody.create(contentType, inBytes);
+
+        // MultipartBody.Part is used to send also the actual file name
+        MultipartBody.Part body = MultipartBody.Part.createFormData("image", filename, requestFile);
+
+        // finally, execute the request
+        Call<ImgurBasicResponse> call = client.addImage(body);
+        call.enqueue(new Callback<ImgurBasicResponse>() {
+            @Override
+            public void onResponse(Call<ImgurBasicResponse> call,
+                                   Response<ImgurBasicResponse> response) {
+                Log.v("Upload", "success");
+                Log.v("imgur", response.toString());
+                Log.v("imgur", "response Successful? "+Boolean.toString(response.isSuccessful()));
+                ImgurBasicResponse body = response.body();
+                if (response.isSuccessful() && response.body() != null && response.body().getSuccess()) {
+                    Log.v("imgur", "Upload was a success");
+
+                    ImgurImageListFragment gallery = (ImgurImageListFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_GALLERY);
+
+                    if (gallery != null){
+                        gallery.refreshList();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ImgurBasicResponse> call, Throwable t) {
+                Log.e("Upload error:", t.getMessage());
+            }
+        });
+    }
+
+    // http://stackoverflow.com/a/1264737/7577505
+    private byte[] readInputStream(InputStream in)
+    {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[16384];
+
+        try {
+            while ((nRead = in.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            buffer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return buffer.toByteArray();
     }
 
     public void onDeleteButtonClicked(final ImgurImage item)
