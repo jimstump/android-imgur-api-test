@@ -2,7 +2,6 @@ package us.stump.imgurapitest;
 
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -14,7 +13,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -68,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements
                 .add(R.id.fragement_container, firstFragment, FRAGMENT_TAG_LOGIN).commit();
 
         // check to see if we have an access token
-        ImgurAccessToken accessToken = (ImgurAccessToken) getIntent().getParcelableExtra("accessToken");
+        ImgurAccessToken accessToken = getIntent().getParcelableExtra("accessToken");
         if (accessToken == null) {
             accessToken = retrieveAuthToken();
         }
@@ -169,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.replace(R.id.fragement_container, newFragment, FRAGMENT_TAG_OAUTH_LOGIN);
         transaction.addToBackStack(FRAGMENT_TAG_OAUTH_LOGIN);
 
         // Commit the transaction
@@ -241,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.replace(R.id.fragement_container, newFragment, FRAGMENT_TAG_GALLERY);
         transaction.addToBackStack(FRAGMENT_TAG_GALLERY);
 
         // Commit the transaction
@@ -260,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack so the user can navigate back
-        transaction.replace(R.id.fragement_container, newFragment);
+        transaction.replace(R.id.fragement_container, newFragment, FRAGEMENT_TAG_IMAGE_VIEW);
         transaction.addToBackStack(FRAGEMENT_TAG_IMAGE_VIEW);
 
         // Commit the transaction
@@ -275,8 +273,8 @@ public class MainActivity extends AppCompatActivity implements
         //http://stackoverflow.com/a/2478662
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setTitle("Logout");
-        builder.setMessage("Are you sure you want to log out of imgur?");
+        builder.setTitle("Delete Image");
+        builder.setMessage("Are you sure you want to permanently delete this image?");
 
         builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
 
@@ -302,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements
         alert.show();
     }
 
-    private void deleteImage(ImgurImage item)
+    private void deleteImage(final ImgurImage item)
     {
         createImgurClient(this.retrieveAuthToken());
 
@@ -317,9 +315,17 @@ public class MainActivity extends AppCompatActivity implements
                 Log.v("imgur", Integer.toString(response.code()));
                 Log.v("imgur", response.message());
 
-                if (response.isSuccessful()) {
-                    // TODO: go "back"
-                    // TODO: remove item from list and refresh view
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                if (response.isSuccessful() && !fragmentManager.isDestroyed()) {
+                    // go "back"
+                    fragmentManager.popBackStackImmediate(FRAGEMENT_TAG_IMAGE_VIEW, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+                    // remove item from list and refresh view
+                    ImgurImageListFragment gallery = (ImgurImageListFragment) fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY);
+
+                    if (gallery != null){
+                        gallery.removeImage(item);
+                    }
                 }
             }
 

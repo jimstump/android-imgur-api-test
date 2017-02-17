@@ -72,6 +72,18 @@ public class MyImgurImageRecyclerViewAdapter extends RecyclerView.Adapter<MyImgu
         notifyDataSetChanged();
     }
 
+    public void removeItemAndNotify(ImgurImage image) {
+        Log.v("imgur", "removeItemAndNotify: "+image.toString());
+        Boolean didListChange = false;
+        while(mValues.contains(image)) {
+            mValues.remove(image);
+            didListChange = true;
+        }
+
+        if (didListChange) {
+            notifyDataSetChanged();
+        }
+    }
 
     @Override
     public int getItemCount() {

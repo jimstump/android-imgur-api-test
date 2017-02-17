@@ -209,6 +209,14 @@ public class ImgurImageListFragment extends Fragment {
         }
     }
 
+    public void removeImage(ImgurImage image) {
+        Log.v("imgur", "removeImage");
+        MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+        if (adapter != null) {
+            adapter.removeItemAndNotify(image);
+        }
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
