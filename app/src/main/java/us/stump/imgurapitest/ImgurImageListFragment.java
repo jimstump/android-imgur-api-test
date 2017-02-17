@@ -2,6 +2,7 @@ package us.stump.imgurapitest;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -41,6 +42,7 @@ public class ImgurImageListFragment extends Fragment {
 
     private ImgurClient client;
     private RecyclerView recyclerView;
+    private EndlessRecyclerViewScrollListener scrollListener;
     private OnListFragmentInteractionListener mListener;
 
     /**
@@ -96,11 +98,32 @@ public class ImgurImageListFragment extends Fragment {
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             recyclerView = (RecyclerView) view;
+
+            LinearLayoutManager linearLayoutManager = null;
+            GridLayoutManager gridLayoutManager = null;
+
             if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
+                linearLayoutManager = new LinearLayoutManager(context);
+                recyclerView.setLayoutManager(linearLayoutManager);
             } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+                gridLayoutManager = new GridLayoutManager(context, mColumnCount);
+                recyclerView.setLayoutManager(gridLayoutManager);
             }
+
+            // http://guides.codepath.com/android/Endless-Scrolling-with-AdapterViews-and-RecyclerView#implementing-with-recyclerview
+            scrollListener = new EndlessRecyclerViewScrollListener((linearLayoutManager != null) ? linearLayoutManager : gridLayoutManager) {
+                protected int visibleThreshold = 10;
+
+                @Override
+                public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
+                    // Triggered only when new data needs to be appended to the list
+                    // Add whatever code is needed to append new items to the bottom of the list
+                    loadUserImages(page, true);
+                }
+            };
+            // Adds the scroll listener to RecyclerView
+            recyclerView.addOnScrollListener(scrollListener);
+
             recyclerView.setAdapter(new MyImgurImageRecyclerViewAdapter(mListener));
         }
         return view;
@@ -150,12 +173,19 @@ public class ImgurImageListFragment extends Fragment {
 
     private void loadUserImages()
     {
-        Log.v("imgur", "loadUserImages");
-        if (images == null) {
+        loadUserImages(0, false);
+    }
+
+    private void loadUserImages(final int page, final boolean calledByEndlessScroll)
+    {
+        Log.v("imgur", "loadUserImages page: "+Integer.toString(page));
+
+        if (images == null || images.isEmpty() || calledByEndlessScroll) {
+            Log.v("imgur", "Need to load images");
             if (accessToken != null) {
                 createImgurClient(accessToken);
 
-                Call<ImgurImagesResponse> call = client.imagesForUser("me", 0);
+                Call<ImgurImagesResponse> call = client.imagesForUser("me", page);
 
                 call.enqueue(new Callback<ImgurImagesResponse>() {
                     @Override
@@ -171,22 +201,37 @@ public class ImgurImageListFragment extends Fragment {
                         if (response.isSuccessful() && body != null) {
                             Log.v("imgur", body.getStatus().toString());
                             Log.v("imgur", body.getSuccess().toString());
-                            images = body.getData();
+
+                            int origSize = 0;
+                            int numberNew = (body.getData() != null) ? body.getData().size() : 0;
+
+                            if (page == 0) {
+                                images = body.getData();
+                            } else {
+                                origSize = images.size();
+                                images.addAll(body.getData());
+                            }
+
+                            final int origSizeFinal = origSize;
+                            final int numberNewFinal = numberNew;
 
                             if (body.getSuccess()) {
-                                MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+                                final MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
                                 if (adapter != null) {
-                                    adapter.setItemsAndNotify(images);
-                                }
+                                    // Delay before notifying the adapter since the scroll listeners
+                                    // can be called while RecyclerView data cannot be changed.
+                                    recyclerView.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // Notify adapter with appropriate notify methods
+                                            if (page == 0) {
+                                                adapter.setItemsAndNotify(images);
+                                            } else {
+                                                adapter.notifyItemRangeInserted(origSizeFinal, numberNewFinal);
+                                            }
+                                        }
+                                    });
 
-                                if (images != null) {
-                                    int i;
-                                    int length = images.size();
-                                    Log.v("imgur", "Received " + Integer.toString(length) + " images");
-                                    for (i = 0; i < length; i++) {
-                                        ImgurImage image = images.get(i);
-                                        Log.v("imgur", image.getLink());
-                                    }
                                 }
                             }
                         }
@@ -208,24 +253,58 @@ public class ImgurImageListFragment extends Fragment {
                 });
             }
         } else {
-            MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+            Log.v("imgur", "I have the images that I need");
+            final MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
             if (adapter != null) {
-                adapter.setItemsAndNotify(images);
+                recyclerView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Notify adapter with appropriate notify methods
+                        adapter.setItemsAndNotify(images);
+                    }
+                });
             }
         }
     }
 
-    public void removeImage(ImgurImage image) {
+    public void removeImage(final ImgurImage image) {
         Log.v("imgur", "removeImage");
-        MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+        final MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
         if (adapter != null) {
-            adapter.removeItemAndNotify(image);
+            recyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Notify adapter with appropriate notify methods
+                    adapter.removeItemAndNotify(image);
+                }
+            });
         }
     }
 
     public void refreshList() {
-        images = null;
+        clearList();
+
         loadUserImages();
+    }
+
+    public void clearList() {
+        // clear list
+        images = null;
+
+        // 2. Notify the adapter of the update
+        final MyImgurImageRecyclerViewAdapter adapter = (MyImgurImageRecyclerViewAdapter) recyclerView.getAdapter();
+        if (adapter != null) {
+            recyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Notify adapter with appropriate notify methods
+                    adapter.notifyDataSetChanged(); // or notifyItemRangeRemoved
+                }
+            });
+        }
+
+        // 3. Reset endless scroll listener when performing a new search
+        scrollListener.resetState();
     }
 
     /**
