@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ImgurAPITest.iml" filepath="$PROJECT_DIR$/ImgurAPITest.iml" />
       <module fileurl="file://$PROJECT_DIR$/aFileChooserModule/aFileChooserModule.iml" filepath="$PROJECT_DIR$/aFileChooserModule/aFileChooserModule.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android-imgur-api-test.iml" filepath="$PROJECT_DIR$/android-imgur-api-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
