@@ -3,7 +3,9 @@ package us.stump.imgurapitest.api.model;
 import java.util.List;
 
 /**
- * Created by jim on 2/11/2017.
+ * GSON Model for a "images" Imgur response
+ *
+ * This is the response that will be returned when making a request for the user's images.
  */
 
 public class ImgurImagesResponse extends ImgurBasicResponse {

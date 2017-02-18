@@ -82,12 +82,12 @@ public class ImgurImage implements Parcelable {
     }
 
     /**
-     * is the image animated
+     * Is the image animated
      */
     private Boolean animated;
 
     /**
-     * is the image animated
+     * Is the image animated
      */
     public Boolean getAnimated() {
         return animated;
@@ -106,72 +106,72 @@ public class ImgurImage implements Parcelable {
     }
 
     /**
-     * The height of the image in pixels
+     * The height of the image in pixels.
      */
     private Integer height;
 
     /**
-     * The height of the image in pixels
+     * The height of the image in pixels.
      */
     public Integer getHeight() {
         return height;
     }
 
     /**
-     * The size of the image in bytes
+     * The size of the image in bytes.
      */
     private Integer size;
 
     /**
-     * The size of the image in bytes
+     * The size of the image in bytes.
      */
     public Integer getSize() {
         return size;
     }
 
     /**
-     * The number of image views
+     * The number of image views.
      */
     private Integer views;
 
     /**
-     * The number of image views
+     * The number of image views.
      */
     public Integer getViews() {
         return views;
     }
 
     /**
-     * Bandwidth consumed by the image in bytes
+     * Bandwidth consumed by the image in bytes.
      */
     private Double bandwidth;
 
     /**
-     * Bandwidth consumed by the image in bytes
+     * Bandwidth consumed by the image in bytes.
      */
     public Double getBandwidth() {
         return bandwidth;
     }
 
     /**
-     * OPTIONAL, the deletehash, if you're logged in as the image owner
+     * OPTIONAL, the deletehash, if you're logged in as the image owner.
      */
     private String deletehash;
 
     /**
-     * OPTIONAL, the deletehash, if you're logged in as the image owner
+     * OPTIONAL, the deletehash, if you're logged in as the image owner.
      */
     public String getDeletehash() {
         return deletehash;
     }
 
     /**
-     * OPTIONAL, the original filename, if you're logged in as the image owner
+     * OPTIONAL, the original filename, if you're logged in as the image owner.
      */
     private String name;
 
     /**
-     * OPTIONAL, the original filename, if you're logged in as the image owner
+     * OPTIONAL, the original filename, if you're logged in as the image owner.
      */
     public String getName() {
         return name;
@@ -343,7 +343,7 @@ public class ImgurImage implements Parcelable {
     }
 
     /**
-     *
+     * Parcelable creator for ImgurImages
      */
     public static final Parcelable.Creator<ImgurImage> CREATOR
             = new Parcelable.Creator<ImgurImage>() {

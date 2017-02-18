@@ -3,8 +3,26 @@
     <string name="imgur_welcome_text">Imgur API Test</string>
     <string name="imgur_login_button_text">Login to Imgur</string>
     <string name="title_activity_login_redirect_handler">LoginRedirectHandlerActivity</string>
+
     <string name="action_add_image">Add Image</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_logout">Logout</string>
     <string name="action_settings">Settings</string>
+
+    <string name="confirm_action_yes">YES</string>
+    <string name="confirm_action_no">NO</string>
+    <string name="confirm_logout_title">Logout</string>
+    <string name="confirm_logout_message">Are you sure you want to log out of Imgur?</string>
+    <string name="confirm_deleteimage_title">Delete Image</string>
+    <string name="confirm_deleteimage_message">Are you sure you want to permanently delete this image?</string>
+
+    <string name="image_list_download_failed">Couldn\'t get your images.  Please try again later.</string>
+    <string name="image_download_failed">Couldn\'t download image.  Please try again later.</string>
+    <string name="video_playback_failed">Error playing gif video.  Please try again later.</string>
+    <string name="image_read_failed">Couldn\'t read the new image.  Please try another one.</string>
+    <string name="image_file_empty">The image file is empty.  Please try another one.</string>
+    <string name="access_token_expired">Your login has expired.  Please log in again before continuing.</string>
+    <string name="image_upload_failed">Your image upload failed.  Please try again later.</string>
+    <string name="image_no_deletehash">You don\'t appear to own this image.  Only the image owner can delete it.</string>
+    <string name="image_delete_failed">Couldn\'t delete your image.  Please try again later.</string>
 </resources>

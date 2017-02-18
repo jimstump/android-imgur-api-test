@@ -4,6 +4,9 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
+/**
+ * ImageView that always has the height set to the current width value.
+ */
 public class SquareImageView extends ImageView {
     public SquareImageView(Context context) {
         super(context);
@@ -24,6 +27,7 @@ public class SquareImageView extends ImageView {
         int width = getMeasuredWidth();
         int height = getMeasuredHeight();
 
+        // if our width doesn't match our height, set our height value to our width
         if (width != height) {
             setMeasuredDimension(width, width);
         }

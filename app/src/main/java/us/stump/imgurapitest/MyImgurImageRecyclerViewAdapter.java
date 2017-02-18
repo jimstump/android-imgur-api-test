@@ -1,6 +1,5 @@
 package us.stump.imgurapitest;
 
-import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -8,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
@@ -27,14 +25,29 @@ import java.util.List;
  */
 public class MyImgurImageRecyclerViewAdapter extends RecyclerView.Adapter<MyImgurImageRecyclerViewAdapter.ViewHolder> {
 
+    /**
+     * List of ImgurImages to display
+     */
     private List<ImgurImage> mValues = new ArrayList<>();
+
+    /**
+     * Instance of the class that will receive the tap/click event for the ImgurImage.
+     */
     private final OnListFragmentInteractionListener mListener;
 
-
+    /**
+     * Constructor for our MyImgurImageRecyclerViewAdapter
+     * @param listener Instance of the class that will receive the tap/click event for the ImgurImage.
+     */
     public MyImgurImageRecyclerViewAdapter(OnListFragmentInteractionListener listener) {
         mListener = listener;
     }
 
+    /**
+     * Constructor for our MyImgurImageRecyclerViewAdapter
+     * @param items List of ImgurImages to display
+     * @param listener Instance of the class that will receive the tap/click event for the ImgurImage.
+     */
     public MyImgurImageRecyclerViewAdapter(List<ImgurImage> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
@@ -49,12 +62,13 @@ public class MyImgurImageRecyclerViewAdapter extends RecyclerView.Adapter<MyImgu
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
+        // give our view holder the ImgurImage to show
         holder.mItem = mValues.get(position);
 
-        holder.loadImage(holder.mItem.getLink());
+        // tell the view holder to load the image now
+        holder.loadImage();
 
-
-
+        // setup our click/tap listener that will let our listener know the image was tapped on
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,11 +81,19 @@ public class MyImgurImageRecyclerViewAdapter extends RecyclerView.Adapter<MyImgu
         });
     }
 
+    /**
+     * Use the given list of ImgurImages and update the view.
+     * @param items The new list of ImgurImages
+     */
     public void setItemsAndNotify(List<ImgurImage> items) {
         this.mValues = items;
         notifyDataSetChanged();
     }
 
+    /**
+     * Remove the given ImgurImage from the list and update the view.
+     * @param image The ImgurImage we want to remove from the list.
+     */
     public void removeItemAndNotify(ImgurImage image) {
         Log.v("imgur", "removeItemAndNotify: "+image.toString());
         Boolean didListChange = false;
@@ -90,39 +112,70 @@ public class MyImgurImageRecyclerViewAdapter extends RecyclerView.Adapter<MyImgu
         return mValues.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        public final View mView;
-        public final ImageView mThumbnail;
-        public ImgurImage mItem;
+    /**
+     * Our RecyclerView.ViewHolder
+     */
+    class ViewHolder extends RecyclerView.ViewHolder {
+        /**
+         * The view we are "holding"
+         */
+        final View mView;
 
-        public ViewHolder(View view) {
+        /**
+         * The ImageView to display our ImgurImage
+         */
+        final ImageView mThumbnail;
+
+        /**
+         * The ImgurImage to display
+         */
+        ImgurImage mItem;
+
+        /**
+         * Construct our ViewHolder
+         * @param view The view we are "holding"
+         */
+        ViewHolder(View view) {
             super(view);
+
+            // grab our views
             mView = view;
             mThumbnail = (ImageView) view.findViewById(R.id.imgur_thumbnail);
         }
 
-        public void loadImage(String url)
+        /**
+         * Load the ImgurImage we want to display
+         */
+        void loadImage()
         {
+            String url = mItem.getLink();
+
+            // load the image with Glide
             Glide.with(mView.getContext())
                     .load(url)
                     .listener(new RequestListener<String, GlideDrawable>() {
                         @Override
                         public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.image_progress);
+                            // The image failed to download
+                            // We don't want to show an error message because there might be a lot of images in our list
 
+                            // hide our progress bar
+                            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.image_progress);
                             progressBar.setVisibility(View.GONE);
                             return false;
                         }
 
                         @Override
                         public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.image_progress);
+                            // The image loaded successfully.
 
+                            // hide our progress bar
+                            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.image_progress);
                             progressBar.setVisibility(View.GONE);
                             return false;
                         }
                     })
-                    .centerCrop()
+                    .centerCrop() // center crop to make our image grid a little prettier
                     .into(mThumbnail);
         }
 

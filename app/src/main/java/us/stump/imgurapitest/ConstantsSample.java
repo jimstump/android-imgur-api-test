@@ -27,8 +27,8 @@ final class ConstantsSample {
     /**
      * Returns the value of the given secret.
      *
-     * @param secretName
-     * @return
+     * @param secretName Use the Constants.SECRET_* constants to retrieve the value for the constant you want.
+     * @return The value for the provided secret.
      */
     public static String getStoredSecret(String secretName)
     {

@@ -11,8 +11,15 @@ import okhttp3.Response;
  */
 
 public class AuthenticationInterceptor implements Interceptor {
+    /**
+     * The value of the Authorization header to use with requests.
+     */
     private String authToken;
 
+    /**
+     * Construct the AuthenticationInterceptor
+     * @param token The value of the Authorization header to use with requests.
+     */
     public AuthenticationInterceptor(String token) {
         this.authToken = token;
     }

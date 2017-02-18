@@ -1,7 +1,6 @@
 package us.stump.imgurapitest;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,23 +11,29 @@ import android.widget.Button;
 
 
 /**
- * A simple {@link Fragment} subclass that includes a "Login to Imgur" button.
+ * A simple {@link Fragment} that includes a "Login to Imgur" button.
+ * This fragment is used as a sort of "Welcome" screen for the app.
  * Activities that contain this fragment must implement the
  * {@link OnLoginButtonClickedListener} interface
  * to handle interaction events.
  */
 public class LoginButtonFragment extends Fragment implements View.OnClickListener {
 
+    /**
+     * The login button.
+     */
     private Button login_button;
+
+    /**
+     * Instance of the class that will receive the tap/click event for the login button.
+     */
     private OnLoginButtonClickedListener mListener;
 
+    /**
+     * Mandatory empty constructor for the fragment manager to instantiate the
+     * fragment (e.g. upon screen orientation changes).
+     */
     public LoginButtonFragment() {
-        // Required empty public constructor
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -50,9 +55,15 @@ public class LoginButtonFragment extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
+
+        // we invalidate the options menu to make sure that the displayed options are relevant to this view
         getActivity().invalidateOptionsMenu();
     }
 
+    /**
+     * Receive our button clicks
+     * @param v The view that was clicked
+     */
     public void onClick(final View v) { //check for what button is pressed
         switch (v.getId()) {
             case R.id.imgur_login_button:
@@ -64,6 +75,11 @@ public class LoginButtonFragment extends Fragment implements View.OnClickListene
         }
     }
 
+    /**
+     * Handle the click/tap event for the login button.
+     *
+     * This really just invokes the action on our OnLoginButtonClickedListener object.
+     */
     public void onLoginButtonPressed() {
         if (mListener != null) {
             mListener.onLoginButtonClicked();
@@ -85,6 +101,11 @@ public class LoginButtonFragment extends Fragment implements View.OnClickListene
     public void onDetach() {
         super.onDetach();
         mListener = null;
+
+        if (login_button != null) {
+            login_button.setOnClickListener(null);
+            login_button = null;
+        }
     }
 
     /**
@@ -98,6 +119,9 @@ public class LoginButtonFragment extends Fragment implements View.OnClickListene
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnLoginButtonClickedListener {
+        /**
+         * Handle the click/tap event for the login button.
+         */
         void onLoginButtonClicked();
     }
 }

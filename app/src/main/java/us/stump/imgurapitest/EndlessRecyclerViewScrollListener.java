@@ -6,6 +6,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 
+@SuppressWarnings("unused")
+/**
+ * OnScrollListener for RecyclerView views that implements an endless list.
+ *
+ * As the user scrolls to the bottom of the view, more data is loaded and added to the RecyclerView.
+ */
 public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnScrollListener {
     // The minimum amount of items to have below your current scroll position
     // before loading more.
@@ -19,6 +25,7 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
     // Sets the starting page index
     private int startingPageIndex = 0;
 
+    // The layout manager used in the RecyclerView we are monitoring
     RecyclerView.LayoutManager mLayoutManager;
 
     public EndlessRecyclerViewScrollListener(LinearLayoutManager layoutManager) {
@@ -33,10 +40,6 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
     public EndlessRecyclerViewScrollListener(StaggeredGridLayoutManager layoutManager) {
         this.mLayoutManager = layoutManager;
         visibleThreshold = visibleThreshold * layoutManager.getSpanCount();
-    }
-
-    public int getCurrentPage() {
-        return currentPage;
     }
 
     public int getLastVisibleItem(int[] lastVisibleItemPositions) {

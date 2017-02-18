@@ -47,19 +47,47 @@ public class MainActivity extends AppCompatActivity implements
         ImgurLoginFragment.OnImgurTokenReceivedListener,
         FullScreenImageFragment.OnDeleteButtonClickedListener
 {
+    /**
+     * Tag for our login button fragment
+     */
     private static final String FRAGMENT_TAG_LOGIN = "login";
+
+    /**
+     * Tag for our Imgur OAuth 2 login flow fragment
+     */
     private static final String FRAGMENT_TAG_OAUTH_LOGIN = "oauthlogin";
+
+    /**
+     * Tag for our image gallery fragment
+     */
     private static final String FRAGMENT_TAG_GALLERY = "gallery";
+
+    /**
+     * Tag for our single image view fragment
+     */
     private static final String FRAGMENT_TAG_IMAGE_VIEW = "imageview";
+
+    /**
+     * Key used to store our access token in SharedPreferences.
+     */
     private static final String SHARED_PREF_ACCESS_TOKEN = "imgurAccessToken";
 
+    /**
+     * Constant representing our image picker request
+     */
     private int PICK_IMAGE_REQUEST = 1;
+
+    /**
+     * ImgurClient that is used to make requests to the Imgur API.
+     */
+    private ImgurClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // setup our action bar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -71,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         // check to see if we have an access token
-        ImgurAccessToken accessToken = retrieveAuthToken();
+        ImgurAccessToken accessToken = retrieveAccessToken();
 
         if (accessToken != null && !accessToken.isExpired()) {
             // handle the access token
@@ -85,8 +113,9 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.v("imgur", "onCreateOptionsMenu");
+        //Log.v("imgur", "onCreateOptionsMenu");
 
+        // IMPORTANT: If you don't call the super call, long presses in the WebView cause the app to crash
         super.onCreateOptionsMenu(menu);
 
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -99,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements
         //Log.v("imgur", "onPrepareOptionsMenu");
         super.onPrepareOptionsMenu(menu);
 
+        // These are the button in the action bar that change visibility depending on which view we are on
         MenuItem addImageButton = menu.findItem(R.id.action_add_image);
         MenuItem refreshButton = menu.findItem(R.id.action_refresh);
         MenuItem logoutButton = menu.findItem(R.id.action_logout);
@@ -107,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements
         Fragment f;
 
         if ((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_LOGIN)) != null && f.isVisible()) {
+            // main login button screen, hide all of the buttons since we aren't logged in
             //Log.v("imgur", "we are on the main login screen (the default screen)");
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
@@ -118,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements
                 logoutButton.setVisible(false);
             }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_OAUTH_LOGIN)) != null && f.isVisible()) {
+            // OAuth 2 login screen, hide all of the buttons since we aren't logged in
             //Log.v("imgur", "we are on the imgur OAuth login screen");
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
@@ -129,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements
                 logoutButton.setVisible(false);
             }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY)) != null && f.isVisible()) {
+            // Image gallery, show all of the buttons
             //Log.v("imgur", "we are on the image gallery screen");
             if (addImageButton != null) {
                 addImageButton.setVisible(true);
@@ -140,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements
                 logoutButton.setVisible(true);
             }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_IMAGE_VIEW)) != null && f.isVisible()) {
+            // Single Image view, hide the "add" and "refresh" buttons since they are only relevant for the image gallery
             //Log.v("imgur", "we are on the single image screen");
             if (addImageButton != null) {
                 addImageButton.setVisible(false);
@@ -174,54 +208,20 @@ public class MainActivity extends AppCompatActivity implements
                 Log.v("imgur", "Add an image!");
 
                 onAddButtonClicked();
-
                 return true;
 
             case R.id.action_refresh:
-                // User chose the "Add Image" item
+                // User chose the "Refresh List" item
                 Log.v("imgur", "Refresh!");
 
-                ImgurImageListFragment gallery = (ImgurImageListFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_GALLERY);
-
-                if (gallery != null){
-                    gallery.refreshList();
-                }
-
+                onRefreshListButtonClicked();
                 return true;
 
             case R.id.action_logout:
                 // User chose the "Logout" item
                 Log.v("imgur", "Logout!");
 
-                //http://stackoverflow.com/a/2478662
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-                builder.setTitle("Logout");
-                builder.setMessage("Are you sure you want to log out of imgur?");
-
-                builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface dialog, int which) {
-                        // log the user out
-                        logout();
-
-                        dialog.dismiss();
-                    }
-                });
-
-                builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        // Do nothing
-                        dialog.dismiss();
-                    }
-                });
-
-                AlertDialog alert = builder.create();
-                alert.show();
-
+                onLogoutButtonClicked();
                 return true;
 
             default:
@@ -231,9 +231,81 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Handle the "Add Image" button click/tap event.
+     *
+     * This creates a ACTION_GET_CONTENT Intent requesting an image that we will upload to Imgur.
+     */
+    private void onAddButtonClicked()
+    {
+        Intent intent = new Intent();
+        // Show only images, no videos or anything else
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        // Always show the chooser (if there are multiple options available)
+        startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
+    }
+
+    /**
+     * Handle the "Refresh List" button click/tap event.
+     *
+     * This is force a refresh of the user's image gallery.
+     */
+    private void onRefreshListButtonClicked()
+    {
+        ImgurImageListFragment gallery = (ImgurImageListFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_GALLERY);
+
+        if (gallery != null){
+            gallery.refreshList();
+        }
+    }
+
+    /**
+     * Handle the "Logout" button click/tap event.
+     *
+     * After confirmation from the user, this will log the user out of Imgur.
+     */
+    private void onLogoutButtonClicked()
+    {
+        // Make sure the user really wants to logout before throwing away their access token
+
+        // See: http://stackoverflow.com/a/2478662
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle(getString(R.string.confirm_logout_title));
+        builder.setMessage(getString(R.string.confirm_logout_message));
+
+        builder.setPositiveButton(getString(R.string.confirm_action_yes), new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int which) {
+                // log the user out
+                logout();
+
+                dialog.dismiss();
+            }
+        });
+
+        builder.setNegativeButton(getString(R.string.confirm_action_no), new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do nothing
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    /**
+     * Log the user out.
+     *
+     * This clears the access token and the backstack and then shows the main login button view.
+     */
     private void logout()
     {
-        clearAuthToken();
+        clearAccessToken();
 
         clearBackStack();
 
@@ -242,13 +314,17 @@ public class MainActivity extends AppCompatActivity implements
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
         // Replace whatever is in the fragment_container view with this fragment,
-        // and add the transaction to the back stack so the user can navigate back
+        // and DO NOT add the transaction to the back stack since we don't want the user to
+        // be able to navigate back
         transaction.replace(R.id.fragment_container, newFragment, FRAGMENT_TAG_LOGIN);
 
         // Commit the transaction
         transaction.commit();
     }
 
+    /**
+     * Helper function that pops everything off the backstack
+     */
     private void clearBackStack() {
         final FragmentManager fragmentManager = getSupportFragmentManager();
         while (fragmentManager.getBackStackEntryCount() != 0) {
@@ -256,15 +332,20 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * The main login button was clicked.
+     *
+     * Show the Imgur OAuth 2 login screen.
+     */
     public void onLoginButtonClicked()
     {
         Log.v("imgur", "Login Clicked!!");
 
-        // pull our imgur API app's app_id and app_secret
+        // pull our Imgur API app's app_id and callback url
         String imgurAppId = Constants.getStoredSecret(Constants.SECRET_IMGUR_APP_ID);
         String imgurAppRedirect = Constants.getStoredSecret(Constants.SECRET_IMGUR_APP_CALLBACK_URL);
 
-        // create the imgur login fragment
+        // create the Imgur login fragment
         // this is the fragment that will perform the OAuth 2 handshake and give us an access token
         ImgurLoginFragment newFragment = ImgurLoginFragment.newInstance(imgurAppId, imgurAppRedirect);
 
@@ -279,67 +360,96 @@ public class MainActivity extends AppCompatActivity implements
         transaction.commit();
     }
 
-    private void clearAuthToken()
+    /**
+     * Clear the access token that is stored in SharedPreferences.
+     */
+    private void clearAccessToken()
     {
-        Log.v("imgur", "clearAuthToken");
+        Log.v("imgur", "clearAccessToken");
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
         editor.remove(SHARED_PREF_ACCESS_TOKEN);
         editor.apply();
     }
 
-    private void storeAuthToken(ImgurAccessToken auth_token)
+    /**
+     * Store the given access token in SharedPreferences.
+     * @param accessToken The access token to store.
+     */
+    private void storeAccessToken(ImgurAccessToken accessToken)
     {
-        Log.v("imgur", "Storing token: "+auth_token.toString());
+        // We are going to store our ImgurAccessToken in SharedPreferences as a serialized JSON string.
+        // This is the easiest way to serialized our object for SharedPreferences storage.
+        Log.v("imgur", "Storing token: "+accessToken.toString());
+
+        // convert the ImgurAccessToken instance to JSON
         Gson gson = new Gson();
-        String authTokenJson = gson.toJson(auth_token);
+        String authTokenJson = gson.toJson(accessToken);
         Log.v("imgur", "token as JSON: "+authTokenJson);
 
+        // store the JSON string in SharedPreferences
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
         editor.putString(SHARED_PREF_ACCESS_TOKEN, authTokenJson);
         editor.apply();
     }
 
-    private ImgurAccessToken retrieveAuthToken()
+    /**
+     * Retrieve the access token from SharedPreferences.
+     * @return The access token that was stored, or null if nothing was stored.
+     */
+    private ImgurAccessToken retrieveAccessToken()
     {
-        ImgurAccessToken auth_token = null;
+        ImgurAccessToken accessToken = null;
 
+        // grab the JSON string from SharedPreferences
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         String authTokenJson = settings.getString(SHARED_PREF_ACCESS_TOKEN, null);
         Log.v("imgur", "Retrieving token as JSON: "+authTokenJson);
 
+        // if we found an access token, convert hydrate a ImgurAccessToken instance
         if (!TextUtils.isEmpty(authTokenJson)) {
             Gson gson = new Gson();
             try {
-                auth_token = gson.fromJson(authTokenJson, ImgurAccessToken.class);
-                Log.v("imgur", "token as object: "+auth_token);
+                accessToken = gson.fromJson(authTokenJson, ImgurAccessToken.class);
+                Log.v("imgur", "token as object: "+accessToken);
             }
             catch (JsonSyntaxException e) {
                 Log.e("imgur", "Error unserializing access token from storage - "+e.toString());
             }
         }
 
-        return auth_token;
+        return accessToken;
     }
 
-    public void OnImgurTokenReceived(ImgurAccessToken auth_token)
+    /**
+     * Handle getting a new access token from the OAuth 2 login flow or SharedPreferences.
+     *
+     * Show the image gallery screen.
+     * @param accessToken The new Imgur access token
+     */
+    public void OnImgurTokenReceived(ImgurAccessToken accessToken)
     {
-        Log.v("imgur", "Received token: "+auth_token.toString());
+        Log.v("imgur", "Received token: "+accessToken.toString());
 
-        if (auth_token.isExpired()) {
+        // If the token has expired (probably because it came from SharedPreferences)
+        // log the user out and then have him/her log in again.
+        if (accessToken.isExpired()) {
+            toastErrorMessage(getString(R.string.access_token_expired));
             Log.v("imgur", "Token Is expired!");
             logout();
             return;
         }
 
-        // store the auth token for future reference
-        storeAuthToken(auth_token);
+        // store the access token for future reference
+        storeAccessToken(accessToken);
 
-        //getSupportFragmentManager().popBackStack(FRAGMENT_TAG_OAUTH_LOGIN, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        // clear the backstack since we don't want the user to hit the back button
+        // and end up in the OAuth 2 login flow (or at the main login button screen)
+        // that is what the logout button is for.
         clearBackStack();
 
-        ImgurImageListFragment newFragment = ImgurImageListFragment.newInstance(auth_token);
+        ImgurImageListFragment newFragment = ImgurImageListFragment.newInstance(accessToken);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
@@ -352,10 +462,15 @@ public class MainActivity extends AppCompatActivity implements
         transaction.commit();
     }
 
+    /**
+     * Handle selecting an image from the image gallery.
+     *
+     * Show the single image screen.
+     * @param item The image that was selected.
+     */
     public void onListFragmentInteraction(ImgurImage item)
     {
         Log.v("imgur", "Image Tapped!!");
-        Log.v("imgur", item.toString());
 
         FullScreenImageFragment newFragment = FullScreenImageFragment.newInstance(item);
 
@@ -370,22 +485,12 @@ public class MainActivity extends AppCompatActivity implements
         transaction.commit();
     }
 
-    public void onAddButtonClicked()
-    {
-        Intent intent = new Intent();
-        // Show only images, no videos or anything else
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        // Always show the chooser (if there are multiple options available)
-        startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // if this is the result of our image picker request and we have an image, upload it to Imgur
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-
             Uri uri = data.getData();
             Log.v("imgur", "Received image: "+uri.toString());
 
@@ -393,41 +498,61 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Upload the image represented by the Uri to the user's Imgur account.
+     * @param fileUri Uri representing the image in the Storage Access Framework (SAF)
+     */
     private void uploadFile(Uri fileUri) {
         Log.v("imgur", "uploadFile: fileuri = "+fileUri.toString());
 
+        // Since this image might not actually be backed by a file,
+        // we can't use the File class to get its contents
+        // Instead we use an InputStream to read in the image.
         InputStream in;
         try {
             in = getContentResolver().openInputStream(fileUri);
         } catch (FileNotFoundException e) {
-            toastErrorMessage("Couldn't read the new image.  Please try another one.");
+            toastErrorMessage(getString(R.string.image_read_failed));
             e.printStackTrace();
             return;
         }
 
         if (in == null) {
-            toastErrorMessage("Couldn't read the new image.  Please try another one.");
+            toastErrorMessage(getString(R.string.image_read_failed));
             Log.e("imgur", "InputStream is null");
             return;
         }
 
+        // read the bytes of the image into a byte array
         byte[] inBytes = readInputStream(in);
 
         if (inBytes == null) {
-            toastErrorMessage("Couldn't read the new image.  Please try another one.");
+            toastErrorMessage(getString(R.string.image_read_failed));
             Log.e("imgur", "inBytes is null");
             return;
         } else if (inBytes.length == 0) {
-            toastErrorMessage("The image file is empty.  Please try another one.");
+            toastErrorMessage(getString(R.string.image_file_empty));
             Log.e("imgur", "inBytes is empty");
             return;
         }
 
-        createImgurClient(this.retrieveAuthToken());
+        // create our Imgur API client with our stored access token
+        ImgurAccessToken accessToken = retrieveAccessToken();
 
-        String filename = null;
+        if (accessToken == null) {
+            toastErrorMessage(getString(R.string.access_token_expired));
+            Log.e("imgur", "access token is null during image upload");
+            logout();
+            return;
+        }
+
+        createImgurClient(accessToken);
+
+        // Lookup the content type of the image we are going to upload
         MediaType contentType = MediaType.parse(getContentResolver().getType(fileUri));
 
+        // see if we can get the original filename for the image
+        String filename = null;
         File file = FileUtils.getFile(this, fileUri);
 
         if (file != null) {
@@ -437,47 +562,50 @@ public class MainActivity extends AppCompatActivity implements
             Log.e("imgur", "uploadFile: file is null");
         }
 
-
-        // create RequestBody instance from file
-        /*RequestBody requestFile = RequestBody.create(
-                        MediaType.parse(getContentResolver().getType(fileUri)),
-                        file
-                );*/
+        // create RequestBody instance from our byte array
         RequestBody requestFile = RequestBody.create(contentType, inBytes);
 
-        // MultipartBody.Part is used to send also the actual file name
+        // Generate the multipart form data for our request body
         MultipartBody.Part body = MultipartBody.Part.createFormData("image", filename, requestFile);
 
-        // finally, execute the request
+        // finally, execute the image upload request
         Call<ImgurBasicResponse> call = client.addImage(body);
         call.enqueue(new Callback<ImgurBasicResponse>() {
             @Override
             public void onResponse(Call<ImgurBasicResponse> call,
                                    Response<ImgurBasicResponse> response) {
-                Log.v("Upload", "success");
-                Log.v("imgur", response.toString());
-                Log.v("imgur", "response Successful? "+Boolean.toString(response.isSuccessful()));
+                Log.v("imgur", "Image upload complete");
+
                 ImgurBasicResponse body = response.body();
-                if (response.isSuccessful() && response.body() != null && response.body().getSuccess()) {
+                if (response.isSuccessful() && body != null && body.getSuccess()) {
                     Log.v("imgur", "Upload was a success");
 
+                    // tell the image gallery to refresh, which will load the new image
                     ImgurImageListFragment gallery = (ImgurImageListFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_TAG_GALLERY);
 
                     if (gallery != null){
                         gallery.refreshList();
                     }
+                } else {
+                    toastErrorMessage(getString(R.string.image_upload_failed));
                 }
             }
 
             @Override
             public void onFailure(Call<ImgurBasicResponse> call, Throwable t) {
-                toastErrorMessage("Couln't upload your image.  Please try again later.");
-                Log.e("Upload error:", t.getMessage());
+                toastErrorMessage(getString(R.string.image_upload_failed));
+                Log.e("Upload error:", (t != null) ? t.getMessage() : "null");
             }
         });
     }
 
-    // http://stackoverflow.com/a/1264737/7577505
+    /**
+     * Read the InputStream into a byte array.
+     *
+     * See: http://stackoverflow.com/a/1264737/7577505
+     * @param in InputStream to read the data from
+     * @return A byte array of the data from the InputStream
+     */
     private byte[] readInputStream(InputStream in)
     {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -498,18 +626,24 @@ public class MainActivity extends AppCompatActivity implements
         return buffer.toByteArray();
     }
 
+    /**
+     * Handle deleting a single image.
+     *
+     * After confirmation from the user, this will permanently delete the image from Imgur.
+     * @param item The image we want to delete
+     */
     public void onDeleteButtonClicked(final ImgurImage item)
     {
         Log.v("imgur", "Image Delete Tapped!!");
         Log.v("imgur", item.toString());
 
-        //http://stackoverflow.com/a/2478662
+        // See: http://stackoverflow.com/a/2478662
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setTitle("Delete Image");
-        builder.setMessage("Are you sure you want to permanently delete this image?");
+        builder.setTitle(getString(R.string.confirm_deleteimage_title));
+        builder.setMessage(getString(R.string.confirm_deleteimage_message));
 
-        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.confirm_action_yes), new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int which) {
                 // actually delete the image
@@ -519,11 +653,10 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.confirm_action_no), new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
                 // Do nothing
                 dialog.dismiss();
             }
@@ -533,62 +666,85 @@ public class MainActivity extends AppCompatActivity implements
         alert.show();
     }
 
+    /**
+     * Permanently delete the given image from Imgur.
+     * @param item The image to delete.
+     */
     private void deleteImage(final ImgurImage item)
     {
-        createImgurClient(this.retrieveAuthToken());
+        // create our Imgur API client with our stored access token
+        ImgurAccessToken accessToken = retrieveAccessToken();
 
-        Call<Void> call = client.deleteImage("me", item.getDeletehash());
+        if (accessToken == null) {
+            toastErrorMessage(getString(R.string.access_token_expired));
+            Log.e("imgur", "access token is null during image delete");
+            logout();
+            return;
+        }
+
+        String imageDeleteHash = item.getDeletehash();
+
+        if (imageDeleteHash == null) {
+            toastErrorMessage(getString(R.string.image_no_deletehash));
+            Log.e("imgur", "image delete hash is null");
+            return;
+        }
+
+        createImgurClient(accessToken);
+
+        Call<Void> call = client.deleteImage("me", imageDeleteHash);
 
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 // The network call was a success and we got a response
-                Log.e("imgur", "API DELETE request succeeded");
-                Log.v("imgur", Boolean.toString(response.isSuccessful()));
-                Log.v("imgur", Integer.toString(response.code()));
-                Log.v("imgur", response.message());
+                Log.e("imgur", "API DELETE request complete");
 
                 FragmentManager fragmentManager = getSupportFragmentManager();
                 if (response.isSuccessful() && !fragmentManager.isDestroyed()) {
-                    // go "back"
+                    Log.e("imgur", "request was successful");
+
+                    // go "back" to the image gallery
                     fragmentManager.popBackStackImmediate(FRAGMENT_TAG_IMAGE_VIEW, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
-                    // remove item from list and refresh view
+                    // remove item from the list and refresh the image gallery view
                     ImgurImageListFragment gallery = (ImgurImageListFragment) fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY);
 
                     if (gallery != null){
                         gallery.removeImage(item);
                     }
+                } else {
+                    toastErrorMessage(getString(R.string.image_delete_failed));
+                    Log.e("imgur", "request failed");
                 }
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 // the network call was a failure
-                // TODO: handle error
-                toastErrorMessage("Couln't delete your image.  Please try again later.");
-                Log.e("imgur", "API DELETE request failed");
-                Log.e("imgur", t.getMessage());
-                Log.e("imgur", call.request().toString());
-                RequestBody body = call.request().body();
-                if (body != null)
-                    Log.e("imgur", body.toString());
-                else
-                    Log.e("imgur", "null");
+                toastErrorMessage(getString(R.string.image_delete_failed));
+                Log.e("Delete error:", (t != null) ? t.getMessage() : "null");
             }
         });
     }
 
+    /**
+     * Displays the given error message to the user.
+     * @param error The error message to display.
+     */
     public void toastErrorMessage(String error) {
         Snackbar.make(findViewById(R.id.main_content), error, Snackbar.LENGTH_LONG)
                 .show();
     }
 
-    private ImgurClient client;
-    private void createImgurClient(ImgurAccessToken auth_token)
+    /**
+     * Create our ImgurClient instance using the ImgurServiceGenerator
+     * @param accessToken The access token to use with the requests.
+     */
+    private void createImgurClient(ImgurAccessToken accessToken)
     {
         if (client == null) {
-            client = ImgurServiceGenerator.createService(ImgurClient.class, auth_token.toAuthorizationHeader());
+            client = ImgurServiceGenerator.createService(ImgurClient.class, accessToken.toAuthorizationHeader());
         }
     }
 }
