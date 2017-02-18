@@ -2,6 +2,7 @@ package us.stump.imgurapitest;
 
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
@@ -30,6 +32,13 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
 
     private ImgurImage image;
     private ImageView imageView;
+
+    /**
+     * VideoView that is used to play the mp4 version of gifs
+     */
+    private VideoView videoView;
+
+     */
     private ProgressBar progressBar;
     private ImageButton deleteImageBtn;
 
@@ -74,11 +83,19 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
         super.onActivityCreated(savedInstanceState);
 
         imageView = (ImageView) getActivity().findViewById(R.id.full_screen_image);
+        videoView = (VideoView) getActivity().findViewById(R.id.full_screen_video);
         progressBar = (ProgressBar) getActivity().findViewById(R.id.full_screen_image_progress);
         deleteImageBtn = (ImageButton)  getActivity().findViewById(R.id.single_image_delete_button);
         deleteImageBtn.setOnClickListener(this);
 
-        loadImage(image.getLink());
+        if ("image/gif".equals(image.getType()) && image.getMp4() != null) {
+            // this is a gif with an mp4 file,
+            // so play that instead of showing the image (which is probably a thumbnail)
+            loadMp4(image.getMp4(), image.getLooping());
+        } else {
+            // download and display the image
+            loadImage(image.getLink());
+        }
     }
 
     @Override
@@ -108,12 +125,16 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
 
     public void loadImage(String url)
     {
+        // hide the video view and show the image view
+        videoView.setVisibility(View.INVISIBLE);
+        imageView.setVisibility(View.VISIBLE);
+
         Glide.with(this)
                 .load(url)
                 .listener(new RequestListener<String, GlideDrawable>() {
                     @Override
                     public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                        Log.e("imgur", "Image Load FAILED - "+e.toString());
+                        Log.e("imgur", "Image Load FAILED - "+((e != null) ? e.toString() : "null"));
                         toastErrorMessage("Couldn't download image.  Please try again later.");
                         if (progressBar != null) {
                             progressBar.setVisibility(View.GONE);
@@ -131,6 +152,36 @@ public class FullScreenImageFragment extends Fragment implements View.OnClickLis
                     }
                 })
                 .into(imageView);
+    }
+
+    public void loadMp4(String url, final Boolean looping) {
+        // hide the image view and show the video view
+        imageView.setVisibility(View.INVISIBLE);
+        videoView.setVisibility(View.VISIBLE);
+
+        videoView.setVideoPath(url);
+        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                //Log.v("imgur", "Video error: "+Integer.toString(what)+" extra "+Integer.toString(extra));
+                toastErrorMessage("Error playing gif video.  Please try again later.");
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+                return false;
+            }
+        });
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                //Log.v("imgur", "onPrepared");
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+                mp.setLooping(looping);
+                mp.start();
+            }
+        });
     }
 
     @Override

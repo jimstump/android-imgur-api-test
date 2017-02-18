@@ -18,9 +18,13 @@
     <ImageView
         android:id="@+id/full_screen_image"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <VideoView
+        android:id="@+id/full_screen_video"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_gravity="center"/>
 
     <ImageButton
         android:id="@+id/single_image_delete_button"
