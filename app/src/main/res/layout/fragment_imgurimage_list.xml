@@ -9,6 +9,6 @@
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
     app:layoutManager="GridLayoutManager"
-    app:spanCount="2"
+    app:spanCount="@integer/image_gallery_span_count"
     tools:context="us.stump.imgurapitest.ImgurImageListFragment"
     tools:listitem="@layout/fragment_imgurimage" />

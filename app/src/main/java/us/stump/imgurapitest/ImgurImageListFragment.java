@@ -39,17 +39,6 @@ public class ImgurImageListFragment extends Fragment {
     private static final String ARG_ACCESS_TOKEN = "accessToken";
 
     /**
-     * Key used in the Bundle that ImgurImageListFragment.newInstance() creates to pass
-     * the number of columns to use to display our images.
-     */
-    private static final String ARG_COLUMN_COUNT = "column-count";
-
-    /**
-     * The number of columns to use to display our images (defaults to 2).
-     */
-    private int mColumnCount = 2;
-
-    /**
      * ImgurAccessToken to use when making a request for images from the API.
      */
     private ImgurAccessToken accessToken;
@@ -97,22 +86,9 @@ public class ImgurImageListFragment extends Fragment {
      * @return A new instance of fragment ImgurImageListFragment.
      */
     public static ImgurImageListFragment newInstance(ImgurAccessToken accessToken) {
-        return ImgurImageListFragment.newInstance(accessToken, 0);
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param accessToken ImgurAccessToken to use when making a request for images from the API.
-     * @param columnCount The number of columns to use to display our images.
-     * @return A new instance of fragment ImgurImageListFragment.
-     */
-    public static ImgurImageListFragment newInstance(ImgurAccessToken accessToken, int columnCount) {
         ImgurImageListFragment fragment = new ImgurImageListFragment();
         Bundle args = new Bundle();
         args.putParcelable(ARG_ACCESS_TOKEN, accessToken);
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
         return fragment;
     }
@@ -131,14 +107,6 @@ public class ImgurImageListFragment extends Fragment {
                     this.accessToken = _accessToken;
                 }
             }
-
-            if (args.containsKey(ARG_COLUMN_COUNT)) {
-                int _mColumnCount = args.getInt(ARG_COLUMN_COUNT);
-
-                if (_mColumnCount > 0) {
-                    this.mColumnCount = _mColumnCount;
-                }
-            }
         }
     }
 
@@ -149,27 +117,14 @@ public class ImgurImageListFragment extends Fragment {
 
         // Set the adapter
         if (view instanceof RecyclerView) {
-            Context context = view.getContext();
             recyclerView = (RecyclerView) view;
 
-            // We need to provide the EndlessRecyclerViewScrollListener instance with the correct type
-            // of layout manager we are using so it knows how to behave.
-            // We will only use one of these (the one that isn't null).
-            LinearLayoutManager linearLayoutManager = null;
-            GridLayoutManager gridLayoutManager = null;
-
-            // 1 column will use a Linear Layout, more than 1 will use the GridLayout
-            if (mColumnCount <= 1) {
-                linearLayoutManager = new LinearLayoutManager(context);
-                recyclerView.setLayoutManager(linearLayoutManager);
-            } else {
-                gridLayoutManager = new GridLayoutManager(context, mColumnCount);
-                recyclerView.setLayoutManager(gridLayoutManager);
-            }
+            // grab our layout manager (setup in the view XML)
+            GridLayoutManager gridLayoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
 
             // http://guides.codepath.com/android/Endless-Scrolling-with-AdapterViews-and-RecyclerView#implementing-with-recyclerview
             // Create our scroll listener to determine the best time to load more images
-            scrollListener = new EndlessRecyclerViewScrollListener((linearLayoutManager != null) ? linearLayoutManager : gridLayoutManager) {
+            scrollListener = new EndlessRecyclerViewScrollListener(gridLayoutManager) {
                 protected int visibleThreshold = 10;
 
                 @Override
