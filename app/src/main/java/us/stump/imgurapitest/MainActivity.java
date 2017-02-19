@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -133,6 +134,9 @@ public class MainActivity extends AppCompatActivity implements
         MenuItem refreshButton = menu.findItem(R.id.action_refresh);
         MenuItem logoutButton = menu.findItem(R.id.action_logout);
 
+        // The action bar toolbar, which we'll change the layout parameters of depending on which view we are on
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment f;
 
@@ -148,6 +152,14 @@ public class MainActivity extends AppCompatActivity implements
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
             }
+            if (toolbar != null) {
+                AppBarLayout.LayoutParams layoutParams = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+
+                if (layoutParams != null) {
+                    // always show the app bar
+                    layoutParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+                }
+            }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_OAUTH_LOGIN)) != null && f.isVisible()) {
             // OAuth 2 login screen, hide all of the buttons since we aren't logged in
             //Log.v("imgur", "we are on the imgur OAuth login screen");
@@ -159,6 +171,14 @@ public class MainActivity extends AppCompatActivity implements
             }
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
+            }
+            if (toolbar != null) {
+                AppBarLayout.LayoutParams layoutParams = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+
+                if (layoutParams != null) {
+                    // always show the app bar
+                    layoutParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+                }
             }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_GALLERY)) != null && f.isVisible()) {
             // Image gallery, show all of the buttons
@@ -172,6 +192,14 @@ public class MainActivity extends AppCompatActivity implements
             if (logoutButton != null) {
                 logoutButton.setVisible(true);
             }
+            if (toolbar != null) {
+                AppBarLayout.LayoutParams layoutParams = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+
+                if (layoutParams != null) {
+                    // collapse the app bar on scroll
+                    layoutParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+                }
+            }
         } else if((f = fragmentManager.findFragmentByTag(FRAGMENT_TAG_IMAGE_VIEW)) != null && f.isVisible()) {
             // Single Image view, hide the "add" and "refresh" buttons since they are only relevant for the image gallery
             //Log.v("imgur", "we are on the single image screen");
@@ -184,6 +212,14 @@ public class MainActivity extends AppCompatActivity implements
             if (logoutButton != null) {
                 logoutButton.setVisible(true);
             }
+            if (toolbar != null) {
+                AppBarLayout.LayoutParams layoutParams = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+
+                if (layoutParams != null) {
+                    // always show the app bar
+                    layoutParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+                }
+            }
         } else {
             //Log.v("imgur", "what screen is this?");
             if (addImageButton != null) {
@@ -194,6 +230,14 @@ public class MainActivity extends AppCompatActivity implements
             }
             if (logoutButton != null) {
                 logoutButton.setVisible(false);
+            }
+            if (toolbar != null) {
+                AppBarLayout.LayoutParams layoutParams = (AppBarLayout.LayoutParams) toolbar.getLayoutParams();
+
+                if (layoutParams != null) {
+                    // always show the app bar
+                    layoutParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+                }
             }
         }
 
