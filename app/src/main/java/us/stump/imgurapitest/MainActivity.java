@@ -1,15 +1,20 @@
 package us.stump.imgurapitest;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -76,7 +81,18 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * Constant representing our image picker request
      */
-    private int PICK_IMAGE_REQUEST = 1;
+    private final int PICK_IMAGE_REQUEST = 1;
+
+    /**
+     * Constant representing our READ_EXTERNAL_STORAGE permission request
+     */
+    private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 4;
+
+    /**
+     * Stores state information related to whether we already showed the user an explanation as to
+     * why we need the external storage permission
+     */
+    private boolean alreadyExplainedReadExternalStorage = false;
 
     /**
      * ImgurClient that is used to make requests to the Imgur API.
@@ -282,6 +298,66 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void onAddButtonClicked()
     {
+        Log.v("imgur", "onAddButtonClicked");
+        // check for permission first
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.v("imgur", "need to ask for permission");
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE) && !alreadyExplainedReadExternalStorage) {
+                Log.v("imgur", "ask for explanation...");
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                toastErrorMessage("External Storage is needed to access images to upload");
+                alreadyExplainedReadExternalStorage = true;
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            }
+        } else {
+            Log.v("imgur", "permissions should be granted, requesting image");
+            doAddImageIntent();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                Log.v("imgur", "permission result for external storage");
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.v("imgur", "permission was granted");
+
+                    // permission was granted
+                    doAddImageIntent();
+
+                } else {
+                    // permission denied
+                    toastErrorMessage("External Storage is needed to access images to upload");
+                }
+                return;
+            }
+        }
+    }
+
+    /**
+     * Actually request an image from the system
+     */
+    private void doAddImageIntent()
+    {
+        Log.v("imgur", "requesting an image from the system");
         Intent intent = new Intent();
         // Show only images, no videos or anything else
         intent.setType("image/*");
