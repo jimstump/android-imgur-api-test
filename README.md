@@ -13,6 +13,9 @@ Class and rename/refactor it to `Constants`.  Then update the `getStoredSecret` 
 for your Imgur API Application.
 4. Build and enjoy!
 
+## Requirements
+* Minimum version of Android is 4.4 KitKat (API level 19)
+
 ## Features
 * Login to Imgur
 * View all images associated with your Imgur account
